@@ -1,23 +1,22 @@
-# Beauty Girl Studio Smart Data Suite
+#  Beauty Girl Studio Smart Data Suite
 
-> Plataforma inteligente de apoyo a la toma de decisiones para centros de estética basada en Ciencia de Datos e Inteligencia Artificial.
+> Plataforma inteligente de apoyo a la toma de decisiones para centros de estética mediante **Data Engineering, Data Science, Business Intelligence e Inteligencia Artificial Generativa**.
 
-## Descripción
+---
 
-Este repositorio contiene el desarrollo del Trabajo Fin de Máster del **Máster en Data Science & Artificial Intelligence**, cuyo objetivo es diseñar e implementar una plataforma inteligente capaz de transformar los datos operativos de un centro de estética en información útil para apoyar la toma de decisiones.
+#  Descripción
 
-El proyecto toma como caso de estudio **Beauty Girl Studio**, un pequeño negocio especializado en servicios de uñas, diseño de cejas, venta de bisutería y entre otros.
+Este repositorio contiene el desarrollo del **Trabajo Fin de Máster (TFM)** del **Máster en Data Science & Artificial Intelligence**, cuyo objetivo es diseñar e implementar una plataforma analítica capaz de transformar los datos operativos de un centro de estética en información estratégica para la toma de decisiones.
 
-La plataforma propuesta combinará técnicas de:
+El proyecto toma como caso de estudio **Beauty Girl Studio**, un negocio especializado en:
 
--  Análisis Exploratorio de Datos (EDA)
--  Visualización de datos
--  Machine Learning
--  Inteligencia Artificial Generativa (LLM)
--  Modelos predictivos
--  Segmentación de clientes
+-  Manicura y extensión de uñas
+-  Diseño de cejas y pestañas
+-  Venta de bisutería
+-  Programas de fidelización
+-  Gestión digital de citas
 
-El objetivo final es demostrar cómo una pequeña empresa puede aprovechar sus propios datos para mejorar su gestión mediante herramientas de Ciencia de Datos.
+A partir de datos reales generados por el negocio se desarrollará una solución escalable que combine técnicas de Ingeniería de Datos, Ciencia de Datos y IA Generativa para optimizar la gestión comercial y operativa.
 
 ---
 
@@ -27,25 +26,85 @@ El proyecto persigue cuatro objetivos estratégicos.
 
 ## 1. Optimizar la ocupación del estudio
 
-Analizar el histórico de reservas para identificar patrones temporales y predecir la demanda futura, facilitando la planificación de horarios y promociones.
+Analizar el histórico de reservas para identificar patrones temporales y predecir la demanda futura.
 
 ---
 
-## 2. Mejorar la fidelización de las clientas
+## 2. Mejorar la fidelización
 
-Segmentar a los clientes según sus hábitos de consumo y frecuencia de visita para apoyar estrategias de retención y personalización.
+Segmentar a los clientes según su comportamiento para diseñar campañas de retención y personalización.
 
 ---
 
 ## 3. Reducir cancelaciones
 
-Desarrollar modelos predictivos capaces de estimar la probabilidad de cancelación de una cita y facilitar acciones preventivas.
+Desarrollar modelos predictivos que permitan anticipar cancelaciones y facilitar acciones preventivas.
 
 ---
 
-## 4. Automatizar campañas mediante IA Generativa
+## 4. Automatizar la toma de decisiones
 
-Utilizar modelos LLM para generar campañas comerciales, promociones y recomendaciones personalizadas a partir de los resultados obtenidos por los modelos analíticos.
+Integrar modelos de Inteligencia Artificial Generativa que transformen los resultados analíticos en recomendaciones comerciales, campañas y contenido personalizado.
+
+---
+
+#  Arquitectura del proyecto
+
+El proyecto sigue una arquitectura inspirada en los principios de un **Lakehouse**, adaptada al tamaño del negocio.
+
+```text
+Fuentes de datos
+        │
+        ▼
+ Raw Layer
+(Datos originales)
+        │
+        ▼
+ Processed Layer
+(Limpieza y transformación)
+        │
+        ▼
+ Data Warehouse
+(SQLite)
+        │
+        ▼
+ Gold Layer
+(Datasets analíticos)
+        │
+        ├────────► Dashboards
+        │
+        ├────────► Machine Learning
+        │
+        └────────► IA Generativa
+```
+
+Esta arquitectura permitirá incorporar nuevas fuentes de información sin modificar el diseño general del sistema.
+
+---
+
+#  Modelo de datos
+
+La arquitectura de datos se basa en un **modelo dimensional (Star Schema)** compuesto por tablas de hechos y dimensiones.
+
+### Dimensiones
+
+- `dim_cliente`
+- `dim_servicio`
+- `dim_fecha`
+
+### Tablas de hechos
+
+- `fact_citas`
+- `fact_transacciones`
+
+### Datasets Gold
+
+- `gold_customer_analytics`
+- `gold_daily_metrics`
+- `gold_service_metrics`
+- `gold_business_kpis`
+
+Estos datasets constituirán la base para los modelos predictivos, dashboards y componentes de IA Generativa.
 
 ---
 
@@ -53,17 +112,18 @@ Utilizar modelos LLM para generar campañas comerciales, promociones y recomenda
 
 El resultado final será una plataforma denominada:
 
-**Beauty Girl Studio Smart Data Suite**
+## **Beauty Girl Studio Smart Data Suite**
 
 El MVP incluirá:
 
-- Dashboard interactivo.
-- KPIs del negocio.
-- Predicción de demanda.
-- Predicción de cancelaciones.
-- Segmentación de clientas.
-- Recomendador de promociones.
-- Generación automática de campañas mediante IA Generativa.
+-  Dashboard ejecutivo
+-  KPIs de negocio
+-  Predicción de demanda
+-  Predicción de cancelaciones
+-  Segmentación automática de clientes
+-  Sistema inteligente de promociones
+-  IA Generativa para campañas comerciales
+-  Resúmenes ejecutivos para apoyo a la toma de decisiones
 
 ---
 
@@ -71,29 +131,28 @@ El MVP incluirá:
 
 ```text
 BeautyGirlStudioSmartDataSuite/
-│
+
 ├── data/
 │   ├── raw/
 │   ├── processed/
-│   └── external/
+│   ├── warehouse/
+│   └── gold/
 │
 ├── docs/
 │   ├── entregas/
-│   │   ├── 01_ideas_producto.md
-│   │   ├── 02_datos_necesarios.md
-│   │   ├── 03_...
-│   │   └── ...
-│   │
-│   ├── images/
+│   ├── architecture/
+│   ├── diagrams/
 │   └── references/
 │
 ├── notebooks/
 │
 ├── src/
-│   ├── data/
+│   ├── ingestion/
+│   ├── cleaning/
+│   ├── warehouse/
 │   ├── features/
 │   ├── models/
-│   ├── visualization/
+│   ├── dashboards/
 │   └── llm/
 │
 ├── dashboard/
@@ -101,86 +160,106 @@ BeautyGirlStudioSmartDataSuite/
 ├── reports/
 │
 ├── requirements.txt
-│
-├── LICENSE
-│
-└── README.md
+├── README.md
+└── LICENSE
 ```
 
 ---
 
 #  Fuentes de datos
 
-Las principales fuentes de información previstas son:
+Actualmente el proyecto utiliza información real procedente de:
 
-- Aplicación de gestión de citas de Beauty Girl Studio.
-- Programa de fidelización.
-- Historial de servicios.
-- Información pública de Instagram.
-- APIs meteorológicas.
-- Calendarios de festivos.
-- Datos derivados generados durante el proyecto.
+-  Aplicación de gestión de citas.
+-  Base de datos de clientes.
+-  Historial de transacciones.
+-  Catálogo de servicios.
+-  Historial de precios.
+-  Información pública de Instagram.
+
+Fuentes futuras:
+
+-  API meteorológica.
+-  Calendario de festivos.
+-  Eventos locales.
+-  Métricas de campañas.
 
 ---
 
-#  Tecnologías previstas
+#  Stack tecnológico
 
-Durante el desarrollo podrán utilizarse herramientas como:
+## Ingeniería de Datos
 
 - Python
 - Pandas
 - NumPy
+- SQLite
+- Apache Parquet
+
+## Ciencia de Datos
+
 - Scikit-learn
 - XGBoost
+- Prophet
+- Statsmodels
+
+## Visualización
+
 - Plotly
 - Streamlit
-- SQL
+
+## Inteligencia Artificial
+
 - OpenAI API
+- Large Language Models (LLM)
+
+## Desarrollo
+
 - Git
 - GitHub
-
-La selección definitiva dependerá de la disponibilidad y calidad de los datos.
+- VS Code
 
 ---
 
 #  Modelos previstos
 
-Dependiendo de la información finalmente disponible, el proyecto podrá incorporar:
-
-### Análisis descriptivo
-
-- KPIs
-- Dashboards
-- Visualización interactiva
-
-### Modelos predictivos
+## Machine Learning
 
 - Regresión Lineal
 - Regresión Logística
 - Random Forest
 - Gradient Boosting
 - XGBoost
-
-### Segmentación
-
 - K-Means
-- DBSCAN
+
+## Analítica
+
+- KPIs
+- Customer Lifetime Value (CLV)
 - Análisis RFM
+- Predicción de abandono
+- Predicción de demanda
+- Predicción de cancelaciones
 
-### IA Generativa
+## Inteligencia Artificial Generativa
 
-- Generación automática de campañas.
-- Recomendaciones personalizadas.
-- Redacción de promociones.
-- Apoyo a la comunicación con clientas.
+Los modelos LLM utilizarán los resultados generados por los modelos analíticos para:
+
+- Generar campañas comerciales
+- Redactar promociones
+- Recomendar acciones de fidelización
+- Resumir indicadores ejecutivos
+- Asistir en la toma de decisiones
 
 ---
 
 #  Privacidad
 
-El proyecto utilizará datos reales pertenecientes a una empresa colaboradora.
+El proyecto utiliza datos reales pertenecientes a una empresa colaboradora.
 
-Antes de cualquier análisis se aplicarán procesos de anonimización para eliminar información identificable de los clientes, garantizando el cumplimiento del Reglamento General de Protección de Datos (RGPD).
+Antes de cualquier análisis se aplican procesos de anonimización y limpieza para garantizar el cumplimiento del Reglamento General de Protección de Datos (RGPD).
+
+Toda la información utilizada con fines académicos será agregada o anonimizada.
 
 ---
 
@@ -188,24 +267,60 @@ Antes de cualquier análisis se aplicarán procesos de anonimización para elimi
 
 Actualmente el proyecto se encuentra en la fase de:
 
-> 🟢 Comprensión del negocio y análisis de los datos necesarios.
+> 🟢 Diseño de la arquitectura de datos y construcción del modelo dimensional.
+
+Se ha completado:
+
+- ✅ Definición del problema de negocio.
+- ✅ Selección de fuentes de datos.
+- ✅ Diseño de la arquitectura por capas.
+- ✅ Diseño del modelo dimensional.
+- ✅ Definición de la capa Gold.
+
+La siguiente etapa será:
+
+- 🔄 Data Profiling.
+- 🔄 Limpieza de datos.
+- 🔄 Construcción del Data Warehouse.
 
 ---
 
 #  Roadmap
 
-- [x] Selección de la idea del proyecto.
-- [x] Definición del problema de negocio.
-- [x] Identificación de fuentes de datos.
-- [ ] Obtención de los datos.
-- [ ] Limpieza y preparación.
-- [ ] Análisis exploratorio.
-- [ ] Ingeniería de características.
-- [ ] Desarrollo de modelos predictivos.
-- [ ] Integración de IA Generativa.
-- [ ] Desarrollo del dashboard.
-- [ ] Validación del MVP.
-- [ ] Documentación final.
+## Fase 1 — Comprensión del negocio
+
+- [x] Selección del caso de estudio
+- [x] Definición del problema
+- [x] Objetivos del proyecto
+
+## Fase 2 — Arquitectura de datos
+
+- [x] Identificación de fuentes
+- [x] Diseño de capas
+- [x] Modelo dimensional
+- [x] Diseño de datasets Gold
+
+## Fase 3 — Ingeniería de Datos
+
+- [ ] Data Profiling
+- [ ] Limpieza y normalización
+- [ ] Resolución de duplicados
+- [ ] Construcción del Data Warehouse
+
+## Fase 4 — Ciencia de Datos
+
+- [ ] EDA
+- [ ] Feature Engineering
+- [ ] Modelos predictivos
+- [ ] Evaluación
+
+## Fase 5 — Producto
+
+- [ ] Dashboard
+- [ ] IA Generativa
+- [ ] MVP
+- [ ] Validación con Beauty Girl Studio
+
 
 ---
 
@@ -221,8 +336,9 @@ Actualmente el proyecto se encuentra en la fase de:
 
 ---
 
+
 #  Licencia
 
 Este repositorio tiene fines exclusivamente académicos.
 
-Los datos utilizados pertenecen a Beauty Girl Studio y serán tratados de forma anonimizada. No se distribuirán datos personales ni información confidencial.
+Los datos pertenecen a Beauty Girl Studio y no serán publicados. Toda la información utilizada en el proyecto será previamente anonimizada y tratada conforme al Reglamento General de Protección de Datos (RGPD).
