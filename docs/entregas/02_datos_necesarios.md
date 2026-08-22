@@ -7,338 +7,181 @@
 
 ---
 
-# 1. Idea seleccionada
-
-## Propósito del proyecto
-
-El propósito de este proyecto es diseñar una plataforma inteligente de apoyo a la toma de decisiones para **Beauty Girl Studio**, un centro de estética especializado principalmente en servicios de uñas, diseño de cejas, venta de bisutería, entre otros. Actualmente el negocio dispone de una aplicación para la gestión de citas que almacena información histórica de las reservas realizadas por las clientas, un programa de fidelización, así como de una presencia consolidada en Instagram, donde comparte sus trabajos y mantiene una alta interacción con su comunidad.
-
-La propuesta consiste en desarrollar **Beauty Girl Studio Smart Data Suite**, una plataforma basada en Ciencia de Datos e Inteligencia Artificial que permita transformar los datos operativos del negocio en conocimiento accionable. El objetivo es facilitar la toma de decisiones mediante modelos predictivos, análisis descriptivos, segmentación de clientes e IA Generativa para apoyar la gestión diaria del negocio.
-
-El proyecto pretende demostrar cómo una pequeña empresa puede aprovechar sus propios datos para mejorar la planificación de recursos, incrementar la fidelización de sus clientas, optimizar campañas comerciales y aumentar la rentabilidad sin necesidad de realizar grandes inversiones tecnológicas.
+> **Nota aclaratoria sobre la modificación de esta entrega**  
+> Tras la revisión del tutor, se decidió acotar el alcance del proyecto para garantizar su viabilidad dentro del tiempo disponible y la calidad real de los datos.  
+>  
+> Las versiones anteriores de las entregas 2 y 3 incluían múltiples líneas de análisis (predicción de demanda, cancelaciones, segmentación avanzada, CLV, recomendación y uso de IA generativa) que excedían el volumen, la granularidad y la estabilidad del histórico disponible.  
+>  
+> Además, el tutor señaló dos aspectos críticos:  
+> - La necesidad de **priorizar un único problema predictivo** para el MVP.  
+> - La obligación de **proteger la privacidad**, evitando que datos personales lleguen al warehouse o a la capa gold.  
+>  
+> Por ello, ambas entregas fueron reformuladas para centrarse exclusivamente en un problema acotado, viable y alineado con los datos:  
+> **la medición de fidelización mediante RFM y la predicción de probabilidad de retorno de las clientas en un horizonte temporal definido.**  
+>  
+> Esta modificación mejora la coherencia del proyecto, reduce riesgos metodológicos y garantiza que las siguientes fases (EDA, modelado y dashboard) puedan desarrollarse con rigor y trazabilidad.
 
 ---
+
+# 1. Idea seleccionada
 
 ## Problema que resuelve
 
-Muchos pequeños centros de estética utilizan aplicaciones para gestionar sus citas, pero normalmente estas herramientas funcionan únicamente como agendas digitales y no explotan el potencial de los datos que generan diariamente. Esto provoca que decisiones relacionadas con promociones, horarios, campañas comerciales o fidelización se basen principalmente en la experiencia del negocio y no en información objetiva.
-
-Beauty Girl Studio no es una excepción. Aunque dispone de un histórico de aproximadamente un año de reservas, información sobre los servicios contratados, programas de fidelización y una comunidad activa en redes sociales, actualmente estos datos no se analizan de forma sistemática para identificar patrones de comportamiento de las clientas ni para optimizar la gestión del negocio.
-
-Resolver este problema permitirá transformar la información histórica en recomendaciones que apoyen decisiones estratégicas, mejorando la ocupación de la agenda, reduciendo cancelaciones, aumentando la fidelización y ofreciendo una experiencia más personalizada para los clientes.
-
----
+Beauty Girl Studio dispone de varios años de información histórica sobre citas, servicios y ventas. Sin embargo, estos datos no se utilizan para comprender el comportamiento de las clientas ni para anticipar su retorno. Esto provoca que decisiones sobre promociones, comunicación y fidelización se basen en intuición y no en evidencia. El negocio necesita identificar qué clientas están activas, cuáles están en riesgo de abandono y qué factores influyen en su retorno, para poder actuar de forma preventiva y estratégica.
 
 ## Solución planteada
 
-La solución propuesta consiste en desarrollar una plataforma de analítica denominada **Beauty Girl Studio Smart Data Suite**, construida desde un enfoque de Ciencia de Datos.
-
-La plataforma integrará información procedente de distintas fuentes del negocio para construir un conjunto de datos que permita aplicar técnicas de análisis exploratorio, visualización, modelos predictivos y segmentación de clientes.
-
-Como complemento, se incorporará un módulo de IA Generativa basado en Large Language Models (LLM) que utilizará la información generada por los modelos analíticos para crear recomendaciones comerciales, campañas personalizadas y propuestas de comunicación dirigidas a diferentes perfiles de clientas.
-
-El objetivo no será sustituir la toma de decisiones humanas, sino proporcionar información útil que facilite la gestión diaria del negocio mediante herramientas de apoyo basadas en datos.
-
----
-
-## Objetivos estratégicos del proyecto
-
-El desarrollo del proyecto estará orientado a cuatro objetivos principales de negocio.
-
-### Objetivo 1. Optimizar la ocupación del estudio
-
-Analizar el histórico de reservas para identificar patrones temporales y predecir la demanda futura por días y franjas horarias.
-
-Esto permitirá detectar horarios con baja ocupación y planificar promociones específicas que ayuden a mejorar el aprovechamiento de la agenda.
-
-Posibles técnicas:
-
-- Regresión lineal
-- Árboles de decisión
-- Random Forest Regressor
-- Series temporales
-
----
-
-### Objetivo 2. Mejorar la fidelización de las clientas
-
-Analizar el comportamiento histórico de las clientas para identificar diferentes perfiles según su frecuencia de visita, gasto, utilización de promociones y participación en el programa de fidelización.
-
-El objetivo será facilitar campañas personalizadas para aumentar la retención y el valor de cada cliente.
-
-Posibles técnicas:
-
-- Clustering (K-Means)
-- Análisis RFM
-- Customer Lifetime Value
-- DBSCAN
-
----
-
-### Objetivo 3. Reducir cancelaciones y ausencias
-
-Construir un modelo capaz de estimar la probabilidad de cancelación de una cita utilizando información histórica sobre comportamiento de los clientes, horarios, tipo de servicio y antelación de la reserva.
-
-Este modelo permitirá actuar preventivamente mediante recordatorios o promociones dirigidas a cubrir posibles huecos en la agenda.
-
-Posibles técnicas:
-
-- Regresión logística
-- Random Forest
-- Gradient Boosting
-- XGBoost
-
----
-
-### Objetivo 4. Automatizar acciones comerciales mediante IA Generativa
-
-Utilizar un modelo LLM para transformar los resultados obtenidos por los modelos analíticos en contenido útil para el negocio.
-
-Algunos ejemplos serían:
-
-- Campañas personalizadas
-- Mensajes promocionales
-- Publicaciones para Instagram
-- Recomendaciones comerciales
-- Propuestas de fidelización
-
-En este proyecto la IA Generativa actuará como una herramienta complementaria a los modelos de Ciencia de Datos, utilizando la información obtenida mediante el análisis para generar contenido adaptado a cada segmento de clientes.
-
----
+El proyecto desarrollará un sistema analítico centrado en **medir la fidelización y predecir la probabilidad de retorno de las clientas**. Para ello se aplicará un análisis RFM (Recencia, Frecuencia y Valor Monetario) y un modelo predictivo basado en regresión logística que estime la probabilidad de que una clienta vuelva en un periodo determinado. Este enfoque permite transformar los datos operativos en conocimiento accionable para mejorar la retención y el valor del cliente.
 
 ## MVP del proyecto final
 
-El producto mínimo viable consistirá en una plataforma interactiva denominada **Beauty Girl Studio Smart Data Suite**.
+El MVP consistirá en un dashboard interactivo y un modelo predictivo funcional que incluya:
 
-El MVP incluirá como mínimo:
+- Análisis RFM por clienta.
+- Identificación de clientas activas, recurrentes, ocasionales y en riesgo.
+- Modelo de probabilidad de retorno basado en regresión logística.
+- Visualización de insights clave para la toma de decisiones.
 
-- Dashboard interactivo con indicadores clave del negocio (KPIs).
-- Visualización de ocupación, ingresos y evolución de clientes.
-- Modelo predictivo de cancelaciones.
-- Modelo predictivo de demanda por días y franjas horarias.
-- Segmentación automática de clientas.
-- Recomendador de promociones basado en datos.
-- Módulo de IA Generativa para crear campañas comerciales personalizadas.
-
-El objetivo es que el usuario pueda visualizar el estado del negocio y recibir recomendaciones generadas automáticamente a partir de los modelos desarrollados.
+El resto de funcionalidades (predicción de demanda, cancelaciones, segmentación avanzada, IA generativa) se incluirán como **mejoras futuras**, no como parte del MVP.
 
 ---
 
 # 2. Datos necesarios
 
-El proyecto utilizará principalmente información histórica generada por la actividad diaria de Beauty Girl Studio.
+Para desarrollar el análisis de fidelización y el modelo de retorno se requieren datos históricos de citas, ventas y servicios.
 
-## Información de clientes
+## Variables necesarias
 
-Variables previstas:
+### Información de clientes
+- Identificador anonimizado  
+- Fecha de creación  
+- Historial de visitas  
+- Servicios contratados  
+- Gasto total  
+- Frecuencia de asistencia  
+- Estado (activa / inactiva)
 
-- Identificador anonimizado
-- Fecha de alta
-- Programa de fidelización
-- Número de visitas
-- Historial de servicios
-- Frecuencia de visitas
-- Estado (cliente activa o inactiva)
+### Información de citas y reservas
+- Fecha de realización  
+- Fecha de creación  
+- Servicio solicitado  
+- Prestador  
+- Estado de la cita (reservada, confirmada, cancelada)  
+- Estado de pago  
+- Origen de la reserva  
+- Precio real  
+- Fecha de pago (si aplica)
 
----
+### Información de ventas e ítems
+- ID de venta  
+- Fecha de venta  
+- Cliente  
+- Servicio  
+- Precio unitario  
+- Total pagado  
+- Descuentos  
+- Prestador  
+- Fecha de reserva asociada
 
-## Información de citas
-
-Variables previstas:
-
-- Fecha
-- Hora
-- Día de la semana
-- Servicio solicitado
-- Profesional asignado
-- Duración estimada
-- Estado de la cita
-- Cancelación
-- Reprogramación
-- Antelación de la reserva
-- Canal de reserva
-
----
-
-## Información económica
-
-Variables previstas:
-
-- Precio del servicio
-- Descuentos aplicados
-- Promociones utilizadas
-- Venta de bisutería
-- Importe total por visita
-
----
-
-## Programa de fidelización
-
-Variables previstas:
-
-- Número de sellos
-- Recompensas obtenidas
-- Servicios bonificados
-- Uso de promociones
-
----
-
-## Redes sociales (Instagram)
-
-Se estudiará la posibilidad de utilizar información pública de la cuenta oficial del negocio para enriquecer el análisis.
-
-Variables potenciales:
-
-- Fecha de publicación
-- Tipo de publicación
-- Servicio promocionado
-- Número de "Me gusta"
-- Número de comentarios
-- Engagement
-- Hashtags utilizados
-
----
-
-## Selección de diseños de uñas
-
-Uno de los servicios principales del negocio consiste en la realización de diseños personalizados de uñas.
-
-Las clientas suelen seleccionar previamente fotografías de referencia para indicar el estilo deseado.
-
-Aunque este proyecto no desarrollará modelos de visión por computador, estas imágenes podrán utilizarse para generar variables descriptivas mediante IA Generativa, tales como:
-
-- Estilo del diseño
-- Colores predominantes
-- Nivel de complejidad
-- Temporada
-- Temática
-- Tipo de decoración
-
-Estas variables enriquecerán el análisis y permitirán estudiar tendencias de preferencias entre los clientes.
-
----
-
-## Variables derivadas
-
-Durante el proceso de preparación de datos podrán construirse nuevas variables como:
-
-- Tiempo desde la última visita
-- Frecuencia media de asistencia
-- Probabilidad de abandono
-- Cliente recurrente
-- Ocupación por franja horaria
-- Estacionalidad
-- Customer Lifetime Value (CLV)
-- Tasa de cancelación
-
----
+### Información económica
+- Monto total por visita  
+- Promociones utilizadas  
+- Método de pago  
+- Comisiones (si aplica)
 
 ## Granularidad
 
-La granularidad principal del proyecto será **una observación por cita realizada**, ya que este nivel de detalle permite posteriormente agregar la información por cliente, servicio, profesional o periodo temporal según las necesidades del análisis.
-
----
+La granularidad principal será **una observación por cita realizada**, ya que permite reconstruir el historial de cada clienta y calcular recencia, frecuencia y valor monetario.
 
 ## Profundidad histórica
 
-Actualmente el negocio dispone de aproximadamente un año de histórico de información en la aplicación de reservas.
-
-Idealmente se trabajará con la totalidad del histórico disponible, ya que permitirá detectar patrones temporales y entrenar modelos predictivos con suficiente representatividad.
-
----
+Los datos disponibles incluyen registros desde 2022, aunque la calidad mejora significativamente a partir de abril–mayo de 2023.  
+Se utilizará **todo el histórico disponible**, aplicando filtros de calidad cuando sea necesario.
 
 ## Volumen esperado
 
-Se estima trabajar con varios miles de registros de citas, suficientes para desarrollar modelos descriptivos y predictivos adecuados para el proyecto.
-
-En caso de que el volumen sea inferior al esperado, podrán incorporarse variables externas que complementen el análisis.
-
----
+Se espera trabajar con varios miles de citas y ventas, suficiente para análisis RFM y modelos predictivos simples como regresión logística.
 
 ## Datos imprescindibles
 
-Los datos mínimos necesarios serán:
+- Historial de citas  
+- Cliente anonimizado  
+- Fecha de cita  
+- Servicio  
+- Precio  
+- Estado de la cita  
+- Ventas asociadas
 
-- Historial de citas
-- Cliente anonimizado
-- Fecha
-- Hora
-- Servicio
-- Estado de la cita
-- Cancelaciones
-- Precio del servicio
+## Datos deseables (no obligatorios)
 
----
-
-## Datos deseables
-
-Como información complementaria sería interesante disponer de:
-
-- Información meteorológica (de ser posible)
-- Calendario de festivos
-- Campañas comerciales realizadas
-- Estadísticas de Instagram
-- Ventas de bisutería
-- Preferencias de diseños de uñas
+- Programa de fidelización  
+- Preferencias de diseño  
+- Información meteorológica  
+- Festivos  
+- Engagement de Instagram
 
 ---
 
 # 3. Fuentes de datos previstas
 
-La principal fuente de información será la aplicación de gestión de citas utilizada por Beauty Girl Studio.
+La información proviene directamente de la aplicación de gestión de citas y ventas utilizada por Beauty Girl Studio.
 
-Se analizará la posibilidad de exportar los datos históricos en formato CSV o Excel para su posterior tratamiento.
-
-Las fuentes previstas son las siguientes:
+### Fuentes previstas
 
 | Fuente | Información | Formato |
-|---------|-------------|---------|
-| Aplicación de gestión de citas | Clientes, reservas, cancelaciones, servicios | CSV / Excel |
-| Programa de fidelización | Historial de visitas y recompensas | CSV / Excel |
-| Instagram del negocio | Información pública de publicaciones y engagement | Manual / API (si fuera posible) |
-| Open-Meteo | Información meteorológica | API JSON |
-| Calendario de festivos | Variables temporales | CSV / API |
-
-La aplicación de reservas dispone de aproximadamente un año de histórico, lo que representa una base suficientemente sólida para el desarrollo del proyecto.
-
-Las APIs de meteorología y calendarios son abiertas, gratuitas y cuentan con mantenimiento activo.
-
-Instagram constituye una fuente complementaria que permitirá enriquecer el análisis mediante información pública sobre la interacción de las publicaciones.
+|--------|-------------|---------|
+| Aplicación de reservas | Citas, clientes, servicios, estados | Excel |
+| Módulo de ventas | Ventas, ítems, transacciones | Excel |
+| Programa de fidelización | Sellos, recompensas | Excel |
+| Redes sociales | Información pública de Instagram | Manual / API |
+| Datos externos | Festivos, meteorología | API / CSV |
 
 ### Riesgos detectados
 
-Los principales riesgos identificados son:
-
-- Limitaciones para exportar datos desde la aplicación de reservas
-- Registros incompletos o inconsistentes
-- Ausencia de determinadas variables
-- Limitaciones de acceso a métricas avanzadas de Instagram
-- Posibles cambios futuros en las APIs públicas
+- Registros incompletos en años anteriores  
+- Cambios en la estructura de exportación  
+- Campos faltantes o inconsistentes  
+- Limitaciones de acceso a métricas avanzadas de Instagram  
+- Posibles duplicados o errores manuales en reservas
 
 ---
 
 # 4. Consideraciones de privacidad y protección de datos
 
-El proyecto utilizará datos reales pertenecientes a clientes del negocio, por lo que será imprescindible aplicar medidas de anonimización antes de iniciar cualquier análisis.
+Los datos contienen información personal (nombre, email, teléfono).  
+Antes del análisis se aplicará:
 
-Se eliminarán todos los datos personales identificables, incluyendo nombres, teléfonos, direcciones de correo electrónico o cualquier otra información que permita identificar directamente a una persona.
+- Anonimización de clientes  
+- Eliminación de datos sensibles  
+- Uso exclusivo académico  
+- Presentación de resultados agregados  
+- Cumplimiento del RGPD
 
-Cada cliente será representado mediante un identificador anónimo.
-
-Las fotografías utilizadas como referencia para los diseños de uñas no contendrán información personal de los clientes y únicamente se emplearán para extraer características generales relacionadas con los estilos de diseño.
-
-El proyecto tendrá una finalidad exclusivamente académica y todos los resultados se presentarán de forma agregada, respetando en todo momento el Reglamento General de Protección de Datos (RGPD).
+Las imágenes de diseños no contienen datos personales y solo se usarán para variables descriptivas si se incorporan en fases futuras.
 
 ---
 
 # 5. Viabilidad inicial del proyecto
 
-La viabilidad del proyecto es alta debido a que existe acceso directo a una empresa real y colaboración con la propietaria del negocio, lo que facilita la obtención de datos históricos y permite validar los resultados obtenidos sobre un caso de uso real.
+El proyecto es viable porque:
 
-La disponibilidad de aproximadamente un año de histórico en la aplicación de reservas, junto con la información del programa de fidelización y la actividad desarrollada en Instagram, proporciona una base suficientemente amplia para desarrollar análisis descriptivos, modelos predictivos y técnicas de segmentación.
+- Existe acceso directo a los datos reales del negocio.  
+- Hay suficiente histórico para análisis RFM y modelos de retorno.  
+- La calidad de los datos mejora a partir de 2023, lo que permite construir un dataset robusto.  
+- El enfoque está acotado y es realista para el tiempo disponible.  
 
-El componente de IA Generativa complementará el proyecto permitiendo transformar los resultados obtenidos por los modelos analíticos en recomendaciones y acciones comerciales directamente utilizables por el negocio.
+### Riesgos actuales
 
-El principal riesgo identificado es la calidad y completitud de los datos almacenados en la aplicación de gestión de citas. En caso de detectar limitaciones importantes, el proyecto podrá complementarse mediante datos externos (meteorología, festivos o eventos locales) y mediante la generación de nuevas variables derivadas durante el proceso de preparación de datos.
+- Calidad variable en registros antiguos.  
+- Posibles inconsistencias entre reservas, ventas e ítems.  
+- Necesidad de limpieza y unificación de identificadores.
 
-En conjunto, el proyecto presenta una elevada viabilidad técnica y metodológica, mantiene un claro enfoque de Ciencia de Datos y responde a una necesidad real de una pequeña empresa, permitiendo demostrar cómo la analítica avanzada y la Inteligencia Artificial pueden apoyar la toma de decisiones y generar valor de negocio.
+### Alternativas
+
+Si alguna fuente presenta problemas, se puede:
+
+- Limitar el análisis al periodo 2023–2026.  
+- Complementar con datos externos (festivos, clima).  
+- Ajustar el modelo a variables disponibles.
+
+En conjunto, el proyecto es sólido, realista y alineado con una necesidad clara del negocio: **comprender y mejorar la fidelización de sus clientas**.
