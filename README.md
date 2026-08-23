@@ -1,6 +1,6 @@
 #  Beauty Girl Studio Smart Data Suite
 
-> Plataforma analítica para medir la fidelización de clientas y predecir su probabilidad de retorno mediante **Data Engineering, Data Science y Machine Learning**.
+> Plataforma analítica para medir la fidelización de clientas y predecir su probabilidad de retorno mediante **Data Engineering, Data Science y Machine Learning**, con un dashboard elegante, cálido y funcional inspirado en una estética otoñal.
 
 ---
 
@@ -12,7 +12,8 @@ El proyecto utiliza datos reales del negocio (clientes, reservas, ventas, servic
 
 - Mide la fidelización mediante **RFM**  
 - Identifica clientas en riesgo 
-- Estima la **probabilidad de retorno en 90 días**.
+- Estima la **probabilidad de retorno en 90 días**
+- Presenta los resultados en un dashboard profesional y visualmente atractivo.
 
 Esta solución escalable combinará técnicas de Ingeniería de Datos y Ciencia de Datos para optimizar la gestión comercial y operativa.
 
@@ -29,6 +30,7 @@ A partir del historial de visitas, gasto y comportamiento, se construye un model
 - Detectar clientas en riesgo
 - Diseñar acciones de fidelización
 - Mejorar la planificación comercial
+- Optimizar la comunicación con las clientas
 
 ---
 
@@ -95,16 +97,24 @@ Estos datasets constituyen la entrada del análisis RFM y del modelo de probabil
 
 El resultado final será una plataforma denominada:
 
-## **Beauty Girl Studio Smart Data Suite — Versión Fidelización**
+## **Beauty Girl Studio Smart Data Suite — Dashboard de Fidelización y Retorno**
 
 Incluye:
 
 - Análisis RFM por clienta
-- Segmentos de fidelización
 - Modelo de probabilidad de retorno (90 días)
 - Ranking de clientas en riesgo
-- Dashboard analítico
-
+- Filtros avanzados
+- KPIs principales
+- Panel de detalle por clienta
+- Score de retorno
+- Confianza del modelo
+- Segmento RFM
+- Antigüedad del cliente
+- Historial de visitas
+- Gráfico inferior de tendencia
+- Exportación de informes
+  
 **Funcionalidades que quedan como mejoras futuras**
 
 - Predicción de demanda
@@ -148,6 +158,8 @@ BeautyGirlStudioSmartDataSuite/
 │   └── dashboards/
 │
 ├── dashboard/
+│   └── assets/
+│       └── 05_mockup_frontal.png
 │
 ├── reports/
 │
@@ -247,7 +259,7 @@ Se aplican medidas estrictas de anonimización:
 
 Actualmente el proyecto se encuentra en la fase de:
 
-> 🟢 Diseño del análisis y estrategia de modelado..
+> 🟢 Diseño del frontal y experiencia de usuario.
 
 Se ha completado:
 
@@ -255,6 +267,7 @@ Se ha completado:
 - ✅ Entrega 2: Datos necesarios (reformulada)
 - ✅ Entrega 3: Modelo de datos y capa gold (reformulada)
 - ✅ Entrega 4: Estrategia de análisis y modelado
+- ✅ Entrega 5: Diseño del frontal y experiencia de usuario
 
 La siguiente etapa será:
 
@@ -263,6 +276,7 @@ La siguiente etapa será:
 - 🔄 Construcción del Data Warehouse
 - 🔄 EDA
 - 🔄 Entrenamiento del modelo de retorno
+- 🔄 Implementación del dashboard
 
 ---
 
