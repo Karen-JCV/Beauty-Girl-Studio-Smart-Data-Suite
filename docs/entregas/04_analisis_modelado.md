@@ -22,7 +22,7 @@ Este resultado permitirá:
 - Diseñar promociones dirigidas.  
 - Mejorar la planificación del negocio.  
 
-El modelo será consumido en un dashboard y en un ranking de clientas ordenadas por **baja probabilidad de retorno**.
+El modelo será consumido en un dashboard y en un ranking de clientas ordenadas por **baja probabilidad de retorno** (alto riesgo de no retorno).
 
 ---
 
@@ -38,7 +38,8 @@ Antes del modelado se realizará un análisis descriptivo y exploratorio centrad
 - ¿Qué clientas generan mayor valor monetario (monetary)?  
 - ¿Qué patrones diferencian a las clientas que vuelven de las que no?  
 - ¿Cómo se distribuye la variable objetivo (retorno en 90 días)?  
-- ¿Qué proporción de clientas presenta **alto riesgo de no retorno**?
+- ¿Qué proporción de clientas presenta **alto riesgo de no retorno**?  
+- ¿Cómo se distribuyen las probabilidades de retorno y de no retorno del modelo?
 
 ## Análisis descriptivos y comparativos
 
@@ -47,7 +48,7 @@ Antes del modelado se realizará un análisis descriptivo y exploratorio centrad
 - Análisis de ticket medio por segmento RFM.  
 - Relación entre categoría favorita y retorno.  
 - Evolución temporal de visitas por clienta.  
-- Distribución de probabilidad de retorno y de riesgo de no retorno.
+- Distribución de probabilidad de retorno y de riesgo de no retorno.  
 
 ## Hipótesis a comprobar
 
@@ -63,7 +64,8 @@ Antes del modelado se realizará un análisis descriptivo y exploratorio centrad
 - Curvas de visitas acumuladas por clienta.  
 - Heatmaps de correlación entre variables.  
 - Distribución de categorías favoritas.  
-- Distribución de probabilidad de retorno y ranking de riesgo.
+- Curvas de fiabilidad (calibración) de las probabilidades de retorno.  
+- Distribución de bandas de riesgo (bajo / medio / alto) según prob_no_retorno_90d.
 
 ## Utilidad del análisis
 
@@ -73,7 +75,7 @@ Este análisis permitirá:
 - Detectar posibles fugas de información temporal.  
 - Identificar relaciones relevantes para el modelo.  
 - Comprender el comportamiento de las clientas y justificar las decisiones del modelado.  
-- Alinear el modelo con la necesidad real del negocio: localizar clientas con **alto riesgo de no retorno**.
+- Alinear el modelo con la necesidad real del negocio: localizar clientas con **alto riesgo de no retorno** y mostrar probabilidades que tengan sentido como valores de negocio.
 
 ---
 
@@ -92,8 +94,8 @@ Se utilizarán dos baselines:
 ### Baseline 1: Regla trivial
 
 - **Regla:** predecir que todas las clientas NO retornan.  
-- **Uso:** referencia mínima, pero insuficiente por sí sola.
-- **Limitación:** si se evalúa F1 sobre la clase “retorno”, su F1 será 0 y cualquier modelo parecerá mejor.  
+- **Uso:** referencia mínima, pero insuficiente por sí sola.  
+- **Limitación:** si se evalúa F1 sobre la clase “retorno”, su F1 será 0 y cualquier modelo parecerá mejor; por eso se comparará también sobre la clase “no retorna” y con métricas de ranking.
 
 ### Baseline 2: Regla basada en RFM (recency/frequency)
 
@@ -106,11 +108,11 @@ Se utilizarán dos baselines:
 - En servicios de uñas, el ciclo natural de retorno es **30–45 días**.  
 - Una clienta que vuelve **al menos una vez** en ese periodo es considerada activa.  
 - Frecuencias de 2–3 visitas en 30 días son casos especiales y no representan el comportamiento típico.  
-- Esta regla es coherente con la realidad operativa del negocio y constituye un baseline **realista y no sencillo de superar**.
-  
-**Objetivo:**  
+- Esta regla es coherente con la realidad operativa del negocio y constituye un baseline **realista y no trivial**.
 
-  - El modelo debe superar esta regla en términos de capacidad para localizar clientas con alto riesgo de no retorno y generar acciones comerciales útiles.
+**Objetivo:**
+
+- El modelo debe superar esta regla en términos de capacidad para localizar clientas con alto riesgo de no retorno y generar acciones comerciales útiles.
 
 ## Modelos candidatos
 
@@ -204,19 +206,36 @@ Esto evita fuga de información y aproxima el uso real del sistema.
 
 ## Salida del modelo
 
-| Campo              | Tipo   | Descripción                                      |
-|--------------------|--------|--------------------------------------------------|
-| id_cliente_anon    | TEXT   | Identificador anonimizado                        |
-| fecha_referencia   | DATE   | Fecha de corte                                   |
-| prob_retorno_90d   | FLOAT  | Probabilidad de retorno en 90 días              |
-| prob_no_retorno_90d| FLOAT  | 1 - prob_retorno_90d                             |
-| prediccion         | BOOLEAN| 1 = retorna, 0 = no retorna                      |
-| explicacion        | TEXT   | Factores principales (SHAP / coeficientes)       |
+| Campo               | Tipo   | Descripción                                      |
+|---------------------|--------|--------------------------------------------------|
+| id_cliente_anon     | TEXT   | Identificador anonimizado                        |
+| fecha_referencia    | DATE   | Fecha de corte                                   |
+| prob_retorno_90d    | FLOAT  | Probabilidad de retorno en 90 días              |
+| prob_no_retorno_90d | FLOAT  | 1 - prob_retorno_90d                             |
+| prediccion          | BOOLEAN| 1 = retorna, 0 = no retorna                      |
+| explicacion         | TEXT   | Factores principales (SHAP / coeficientes)       |
+| banda_riesgo        | TEXT   | Bajo / Medio / Alto, según umbrales definidos    |
+| indicador_incertidumbre | FLOAT / TEXT | Medida de incertidumbre por clienta     |
 
-El dashboard utilizará principalmente:
+### Score, probabilidad y riesgo
 
-- `prob_no_retorno_90d` para ordenar clientas por **riesgo de no retorno**.  
-- `prob_retorno_90d` y la explicación para comunicar confianza y factores al usuario.
+- El **score de riesgo** que se mostrará en el frontal se derivará de `prob_no_retorno_90d`:
+  - `score_riesgo = prob_no_retorno_90d * 100` (0–100).  
+- Las bandas de riesgo (bajo / medio / alto) se definirán inicialmente con umbrales provisionales (por ejemplo, 40 y 70), pero se **ajustarán tras el análisis de calibración y de coste/beneficio de las acciones comerciales**.
+
+### Factores del modelo
+
+- Los “factores del modelo” que se mostrarán en el frontal procederán de:
+  - coeficientes de la regresión logística,  
+  - o valores SHAP / feature importance en modelos de árboles.  
+- Su objetivo es explicar, en lenguaje de negocio, qué variables han contribuido más al riesgo de no retorno de cada clienta.
+
+### Incertidumbre por clienta
+
+- La “incertidumbre” se definirá como:
+  - probabilidad de retorno en un rango intermedio (por ejemplo, 0.4–0.6),  
+  - y/o alta variabilidad de la probabilidad entre distintos modelos o folds.  
+- Los casos de “riesgo incierto” se marcarán como tales en el frontal solo si esta medida está claramente definida y validada.
 
 ## Formato previsto
 
@@ -267,8 +286,16 @@ Dado que el negocio quiere localizar clientas con riesgo de no retorno, las mét
 - F1-score sobre la clase **“no retorna”**.  
 - Recall de la clase “no retorna” (cuántas clientas en riesgo detectamos).  
 - Precision de la clase “no retorna” (cuántas acciones son realmente útiles).  
-- Métricas de ranking:  
-  - Por ejemplo, porcentaje de clientas realmente en riesgo dentro del top N de mayor probabilidad de no retorno.  
+- Métricas de ranking:
+  - porcentaje de clientas realmente en riesgo dentro del top N de mayor probabilidad de no retorno.  
+
+Además, dado que las probabilidades se mostrarán como valores de negocio en el frontal:
+
+- Se evaluará la **calibración** de las probabilidades mediante:
+  - Curvas de fiabilidad (reliability plots)  
+  - Brier score  
+  - Comparación entre probabilidad media predicha y proporción real de retorno en cada banda.  
+- Si el modelo está descalibrado, se aplicarán técnicas de calibración (por ejemplo, Platt scaling o isotonic regression) sobre las probabilidades de retorno.
 
 ## Regla de decisión final
 
@@ -276,6 +303,7 @@ El modelo será seleccionado si:
 
 - Supera claramente ambos baselines (trivial y RFM).  
 - Mantiene estabilidad en validación temporal.  
+- Está razonablemente bien calibrado para que las probabilidades puedan interpretarse como valores de negocio.  
 - Es interpretable o explicable.  
 - No presenta fuga de información temporal.  
 - Permite ordenar clientas por riesgo de no retorno de forma útil para el negocio.
@@ -301,30 +329,36 @@ El margen de 90 días entre cortes garantiza que las ventanas de etiqueta (los 9
 - Precision de la clase “no retorna” (evitar acciones innecesarias).  
 - Matriz de confusión.  
 - ROC-AUC sobre probabilidad de retorno.  
-- Métricas de ranking (por ejemplo, calidad del top N de riesgo).
+- Métricas de ranking (por ejemplo, calidad del top N de riesgo).  
+- Métricas de calibración:
+  - Brier score.  
+  - Curvas de fiabilidad por bandas de probabilidad.  
 
 ## Comparación con baselines
 
 - Comparar F1, recall y precision sobre la clase “no retorna”.  
 - Comparar la calidad del ranking de riesgo frente a la regla RFM.  
+- Comparar la calibración de las probabilidades frente a una regla simple (por ejemplo, probabilidad constante).
 
 ## Análisis de errores
 
 - Revisar clientas con alto riesgo real no detectadas por el modelo.  
 - Analizar segmentos con peor rendimiento (por categoría, segmento RFM, antigüedad).  
-- Detectar patrones temporales que afecten al rendimiento.
+- Detectar patrones temporales que afecten al rendimiento.  
+- Analizar bandas de riesgo (bajo / medio / alto) para ajustar umbrales según datos y coste de acciones.
 
 ## Criterio de aceptación
 
 - Mejora significativa sobre ambos baselines.  
 - F1-score y recall aceptables sobre la clase “no retorna”.  
 - Ranking de riesgo útil para generar acciones comerciales.  
+- Probabilidades razonablemente calibradas para poder mostrarse en el frontal como “retorno esperado”.
 
 Si ningún modelo cumple los criterios:
 
 - Se utilizará un modelo de reglas basado en RFM y recency.  
 - Se ajustará el horizonte temporal (por ejemplo, 60 o 120 días).  
-- Se simplificará la salida a un score de riesgo sin probabilidad explícita.
+- Se simplificará la salida a un score de riesgo sin interpretación probabilística explícita.
 
 ---
 
@@ -348,11 +382,15 @@ Si ningún modelo cumple los criterios:
 - **Segmentos pequeños:**  
   - Algunas categorías o segmentos RFM tienen pocas observaciones.
 
+- **Calibración insuficiente:**  
+  - Si las probabilidades no están bien calibradas, el frontal podría mostrar valores engañosos.
+
 ## Alternativas
 
 - Cambiar el horizonte de retorno (60 o 120 días) si el 90 resulta demasiado estricto.  
 - Simplificar el modelo a un score RFM de riesgo de no retorno.  
 - Construir un modelo de clasificación “cliente activa vs. inactiva” con horizonte más amplio.  
 - Utilizar únicamente variables numéricas para mayor estabilidad.  
+- Si la calibración es muy pobre, mostrar bandas de riesgo (bajo / medio / alto) sin porcentajes explícitos de retorno esperado.
 
 ---

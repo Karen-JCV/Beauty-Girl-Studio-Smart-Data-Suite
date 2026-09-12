@@ -12,7 +12,7 @@ El proyecto utiliza datos reales del negocio (clientes, reservas, ventas, servic
 
 - Mide la fidelización mediante **RFM**  
 - Identifica clientas en riesgo 
-- Estima la **probabilidad de retorno en 90 días**
+- Estima la **probabilidad calibrada de retorno en 90 días**
 - Presenta los resultados en un dashboard profesional y visualmente atractivo.
 
 Esta solución escalable combinará técnicas de Ingeniería de Datos y Ciencia de Datos para optimizar la gestión comercial y operativa.
@@ -102,13 +102,12 @@ El resultado final será una plataforma denominada:
 Incluye:
 
 - Análisis RFM por clienta
-- Modelo de probabilidad de retorno (90 días)
+- Modelo de probabilidad calibrada de retorno (90 días)
+- Score de riesgo (0–100) derivado de la probabilidad
 - Ranking de clientas en riesgo
 - Filtros avanzados
 - KPIs principales
 - Panel de detalle por clienta
-- Score de retorno
-- Confianza del modelo
 - Segmento RFM
 - Antigüedad del cliente
 - Historial de visitas

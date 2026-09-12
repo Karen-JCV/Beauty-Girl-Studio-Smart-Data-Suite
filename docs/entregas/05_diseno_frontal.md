@@ -15,14 +15,13 @@ El frontal se diseña alineado con el contrato analítico definido en la Entrega
 
 - La salida principal del modelo es:  
   - `prob_retorno_90d` (probabilidad de retorno en 90 días).  
+  - `prob_no_retorno_90d = 1 - prob_retorno_90d`.  
+  - `score_riesgo = prob_no_retorno_90d * 100`.  
   - `prediccion` (retorna / no retorna).  
-  - Variables de explicación (factores principales).
+  - Factores del modelo (coeficientes o SHAP).  
 
-A partir de esta salida se construyen métricas de negocio:
-
-- **Riesgo de no retorno**: derivado de `1 - prob_retorno_90d`.  
-- **Score de riesgo**: escala de 0 a 100 donde 100 indica máximo riesgo de no retorno.  
-- **Etiqueta de riesgo**: Bajo / Medio / Alto según umbrales del score.
+Las probabilidades se mostrarán en el frontal **solo si el modelo está calibrado**.  
+Los umbrales de riesgo (bajo / medio / alto) se consideran **provisionales** y se ajustarán tras la validación con datos reales.
 
 ## Usuario principal
 
@@ -40,18 +39,18 @@ El producto diseñado es un **dashboard predictor y explorador de clientas**, qu
 
 - Ranking de clientas ordenado por **riesgo de no retorno**.  
 - Segmentación RFM.  
-- Score de riesgo (0–100) coherente con el modelo.  
-- Probabilidad de retorno en 90 días.  
+- Score de riesgo (0–100).  
+- Probabilidad de retorno calibrada.  
 - Antigüedad de la clienta.  
 - Historial de visitas.  
-- Factores principales del modelo.  
+- Factores del modelo (explicación).  
 - Gráfico de tendencia de riesgo y retorno.  
 - Filtros avanzados.
 
 ## Resultado principal que obtiene el usuario
 
 - **Score de riesgo de no retorno** (0–100).  
-- **Probabilidad de retorno en 90 días**.  
+- **Probabilidad de retorno calibrada**.  
 - **Etiqueta de riesgo (Bajo / Medio / Alto)**.  
 - **Explicación de los factores que influyen en el riesgo**.  
 - **Base para decidir qué acciones comerciales ejecutar**.
@@ -60,19 +59,16 @@ El producto diseñado es un **dashboard predictor y explorador de clientas**, qu
 
 # 2. Imagen mockup del frontal
 
-A continuación se integra el mockup principal del frontal.  
 La imagen se encuentra en:
 
 `assets/05_mockup_frontal.png`
-
-Y se muestra embebida:
 
 ![Mockup del frontal](../assets/05_mockup_frontal.png)
 
 El mockup refleja:
 
 - Un ranking con **una fila por clienta anonimizada**, sin IDs repetidos.  
-- Columnas coherentes con la salida del modelo: `id_cliente_anon`, score de riesgo, probabilidad de retorno, días desde última visita, etiqueta de riesgo.  
+- Columnas coherentes con la salida del modelo: score de riesgo, probabilidad de retorno, días desde última visita, etiqueta de riesgo.  
 - Un panel de detalle que muestra la información de una única clienta seleccionada.  
 
 ---
@@ -96,18 +92,17 @@ El frontal permite resolver la tarea más importante del negocio: **localizar cl
 
 ### Información esencial mostrada
 
-En la pantalla principal se muestran:
-
-- **Score de riesgo de no retorno (0–100)**: derivado de `1 - prob_retorno_90d`.  
-- **Probabilidad de retorno en 90 días**.  
+- **Score de riesgo de no retorno (0–100)**.  
+- **Probabilidad de retorno calibrada**.  
 - **Etiqueta de riesgo (Bajo / Medio / Alto)**.  
 - Segmento RFM.  
 - Recency, Frequency, Monetary.  
 - Antigüedad de la clienta.  
 - Categoría favorita.  
-- Prestador habitual (para análisis y decisiones, no como variable principal del modelo).  
+- Prestador habitual.  
 - Historial de visitas.  
-- Tendencia de riesgo y retorno.
+- Tendencia de riesgo y retorno.  
+- Factores del modelo (coeficientes o SHAP).
 
 ### Información que se decidió no mostrar
 
@@ -123,19 +118,19 @@ El frontal incluye botones para:
 - Exportar caso.  
 - Descargar CSV.
 
-El panel de detalle muestra los factores principales del modelo (por ejemplo, recency alta, baja frecuencia, ticket medio bajo) para que la propietaria pueda decidir qué acción comercial tiene más sentido.
+El panel de detalle muestra los factores principales del modelo para que la propietaria pueda decidir qué acción comercial tiene más sentido.
 
 ---
 
 ## 3.2. Flujo de usuario
 
-El flujo principal está diseñado para que la propietaria obtenga valor en menos de 30 segundos, partiendo del riesgo de no retorno.
+El flujo principal está diseñado para que la propietaria obtenga valor en menos de 30 segundos.
 
 ### 1. Punto de entrada
 
 Al acceder al dashboard, la usuaria ve:
 
-- KPIs principales del periodo (por ejemplo, % de clientas en alto riesgo, retorno esperado).  
+- KPIs principales del periodo (por ejemplo, % de clientas en alto riesgo, retorno esperado).   
 - Filtros avanzados.  
 - Ranking de clientas ordenado por **score de riesgo de no retorno** (de mayor a menor) por defecto.
 
@@ -158,8 +153,9 @@ Filtros disponibles:
 Cuando la usuaria ajusta filtros o selecciona una clienta:
 
 - El sistema consulta el snapshot correspondiente en la capa gold.  
-- Recupera `prob_retorno_90d` y calcula el **score de riesgo** = `(1 - prob_retorno_90d) * 100`.  
-- Asigna la etiqueta de riesgo según umbrales definidos (por ejemplo, Alto ≥ 70, Medio 40–69, Bajo < 40).  
+- Recupera `prob_retorno_90d` calibrada.  
+- Calcula el **score de riesgo** = `(1 - prob_retorno_90d) * 100`.  
+- Asigna la etiqueta de riesgo según umbrales provisionales (por ejemplo, Alto ≥ 70, Medio 40–69, Bajo < 40), que se ajustarán tras la validación.  
 - Actualiza el panel de detalle y el gráfico inferior de tendencia.
 
 ### 4. Resultado
@@ -167,9 +163,9 @@ Cuando la usuaria ajusta filtros o selecciona una clienta:
 La usuaria recibe:
 
 - Ranking ordenado por riesgo de no retorno.  
-- Para cada clienta: score de riesgo, probabilidad de retorno, etiqueta de riesgo, días desde última visita, segmento RFM.  
-- En el panel de detalle: RFM, antigüedad, categoría favorita, prestador habitual, historial de visitas, factores principales del modelo.  
-- En el gráfico inferior: tendencia de retorno y riesgo en los últimos 180 días.
+- Score, probabilidad, etiqueta de riesgo, días desde última visita.  
+- Panel de detalle con RFM, antigüedad, categoría favorita, prestador habitual, historial de visitas y factores del modelo.  
+- Gráfico inferior con tendencia de retorno y riesgo en los últimos 180 días.
 
 ### 5. Acción
 
@@ -182,23 +178,23 @@ La usuaria puede:
 
 ### 6. Excepciones
 
-- Historial insuficiente → mensaje claro indicando que no se puede calcular un score fiable.  
-- Predicción con baja estabilidad → etiqueta de “riesgo incierto” y aviso de interpretación cuidadosa.  
+- Historial insuficiente → mensaje claro.  
+- Probabilidad no calibrada → aviso de interpretación cuidadosa.  
 - Error técnico → mensaje comprensible y sin términos excesivamente técnicos.
 
 ---
 
 ## 3.3. Experiencia de usuario
 
-El diseño se basa en principios de claridad, simplicidad y confianza, con una estética cálida y profesional.
+El diseño se basa en claridad, simplicidad y confianza, con una estética cálida y profesional.
 
 ### Jerarquía visual
 
-- KPIs y resumen del periodo en la parte superior.  
-- Ranking de clientas en el centro, con **una fila por clienta** y sin IDs repetidos.  
-- Panel de detalle a la derecha, mostrando la información de la clienta seleccionada.  
-- Gráfico inferior ocupando todo el ancho para visualizar la tendencia de riesgo y retorno.
-
+- KPIs arriba.  
+- Ranking de clientas en el centro, con **una fila por clienta**.
+- Panel de detalle a la derecha, mostrando la información de la clienta seleccionada. 
+- Gráfico inferior ocupando todo el ancho.- Gráfico inferior ocupando todo el ancho para visualizar la tendencia de riesgo y retorno.
+  
 ### Simplicidad
 
 - Solo se muestran variables relevantes para la decisión de fidelización.  
@@ -218,9 +214,9 @@ El diseño se basa en principios de claridad, simplicidad y confianza, con una e
 
 ### Contexto y confianza
 
-- El score de riesgo se explica como derivado de la probabilidad de retorno.  
-- La confianza se comunica mediante la propia probabilidad y la calidad del histórico.  
-- Los factores del modelo se presentan como motivos principales del riesgo (por ejemplo, recency alta, baja frecuencia, ticket medio bajo).
+- Score derivado de probabilidad calibrada.  
+- Factores del modelo explicados en lenguaje de negocio.  
+- Umbrales provisionales ajustables tras validación.
 
 ### Control del usuario
 
@@ -230,20 +226,18 @@ El diseño se basa en principios de claridad, simplicidad y confianza, con una e
 
 ### Feedback del sistema
 
-- Indicador de carga al recalcular el ranking o los gráficos.  
-- Alertas claras si faltan datos o el histórico es insuficiente.  
+- Indicador de carga al recalcular el ranking o los gráficos. 
+- Alertas claras.  
 - Mensajes de confirmación al exportar informes o casos.
 
 ---
 
 # 4. Presentación de resultados y explicabilidad
 
-El frontal evita mostrar solo una cifra; cada predicción se acompaña de contexto y explicación coherente.
-
 ## Resultado principal
 
-- **Score de riesgo de no retorno (0–100)**: derivado de `1 - prob_retorno_90d`.  
-- **Probabilidad de retorno en 90 días**.  
+- **Score de riesgo de no retorno (0–100)**.  
+- **Probabilidad de retorno calibrada**.  
 - **Etiqueta de riesgo (Bajo / Medio / Alto)**.  
 - **Segmento RFM**.
 
@@ -255,15 +249,15 @@ El frontal evita mostrar solo una cifra; cada predicción se acompaña de contex
 - Antigüedad de la clienta.  
 - Categoría favorita.  
 - Prestador habitual.  
-- Historial de visitas (gráfico).  
+- Historial de visitas.  
 - Tendencia de retorno y riesgo en el tiempo.  
-- Factores principales del modelo (por ejemplo, recency alta, baja frecuencia, ticket medio bajo).
+- Factores del modelo.
 
 ## Evitar certezas
 
-- Se explica que el score y la probabilidad son estimaciones basadas en datos históricos.  
-- No se presenta una “confianza del modelo” adicional que no esté definida analíticamente.  
-- Se incluyen limitaciones del modelo (por ejemplo, necesidad de suficiente histórico, cambios en el negocio).
+- No se presenta una “confianza del modelo” que no esté definida analíticamente.  
+- Se explica que la probabilidad depende de calibración.  
+- Se aclara que los umbrales se ajustarán con datos reales.
 
 ## Vista de detalle
 
@@ -271,22 +265,19 @@ La pantalla principal muestra solo lo esencial para priorizar clientas.
 La vista de detalle incluye:
 
 - Variables completas de la clienta seleccionada.  
-- Gráfico de visitas y comportamiento temporal.  
-- Factores del modelo que explican el riesgo.  
+- Gráfico de visitas y comportamiento temporal.   
+- Factores del modelo.
 
 ---
 
-# IA generativa como capa de explicación (opcional)
+# IA generativa (fuera del MVP)
 
-El MVP **no incluye IA generativa**, pero se plantea como mejora futura.
+La IA generativa está **fuera del MVP**.  
+Por ello:
 
-Si se incorpora, su función será:
-
-- Resumir el estado de la clienta en lenguaje natural.  
-- Explicar la predicción y el riesgo de forma narrativa.  
-- Sugerir acciones basadas en los datos y en los factores del modelo.
-
-La IA generativa se apoyará siempre en resultados ya calculados y no sustituirá al modelo ni inventará causas.
+- Se elimina del menú.  
+- No se muestra como funcional en el frontal.  
+- Se mantiene en mención solo como mejora futura.
 
 ---
 
@@ -297,15 +288,14 @@ El MVP incluirá:
 - Dashboard funcional en Streamlit.  
 - Filtros avanzados.  
 - KPIs principales del periodo.  
-- Ranking de clientas ordenado por score de riesgo de no retorno.  
-- Panel de detalle por clienta.  
-- Gráfico inferior de tendencia de retorno y riesgo.  
-- Exportación de informes y casos (CSV / PDF).
+- Ranking de clientas por score de riesgo.  
+- Panel de detalle por clienta.
+- Gráfico inferior de tendencia de retorno y riesgo. 
+- Exportación de informes y casos (CSV / EXCEL / PDF).
 
-Elementos que serán solo mockup en esta fase:
+Elementos solo mockup:
 
-- Acciones automatizadas (envío directo de campañas).  
-- Panel de IA generativa.  
+- Acciones automatizadas (envío directo de campañas).    
 - Integración con WhatsApp o email.
 
 Tecnologías previstas:
