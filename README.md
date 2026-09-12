@@ -110,6 +110,7 @@ Incluye:
 - Filtros avanzados
 - KPIs principales
 - Panel de detalle por clienta
+- Botón de exclusión de clientas del panel
 - Segmento RFM
 - Antigüedad del cliente
 - Historial de visitas

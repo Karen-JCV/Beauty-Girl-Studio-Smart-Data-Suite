@@ -182,6 +182,32 @@ La usuaria puede:
 - Probabilidad no calibrada → aviso de interpretación cuidadosa.  
 - Error técnico → mensaje comprensible y sin términos excesivamente técnicos.
 
+### 7. Gestión de clientas excluidas del panel
+
+El frontal incorpora un mecanismo para gestionar casos en los que una clienta **ya no debe aparecer en el ranking**, porque su situación no representa un riesgo comercial real.
+
+En el panel de detalle se incluye el botón:
+
+`[ Excluir del panel ]`
+
+Al seleccionarlo, se despliega un menú con los siguientes motivos:
+
+- Se mudó de ciudad
+- No desea ser contactada
+- Cliente inactiva por motivos personales
+- Ya no pertenece al público objetivo
+- Otro motivo
+
+Al elegir una opción:
+
+- La clienta se marca como **excluida del panel**.
+- Se oculta del ranking, KPIs y filtros.
+- No afecta su historial ni los datos del modelo.
+- No modifica la capa gold ni la variable objetivo.
+- Puede revertirse desde: **Configuración → Clientas excluidas**
+
+Este mecanismo evita ruido en el análisis y mejora la interpretación del riesgo real.
+
 ---
 
 ## 3.3. Experiencia de usuario
@@ -230,6 +256,27 @@ El diseño se basa en claridad, simplicidad y confianza, con una estética cáli
 - Alertas claras.  
 - Mensajes de confirmación al exportar informes o casos.
 
+### Gestión de exclusión de clientas
+
+El panel de detalle incluye un botón visible y claro:
+
+`[ Excluir del panel ]`
+
+Al pulsarlo, aparece un menú desplegable con motivos de exclusión.
+
+El diseño sigue los principios del frontal:
+
+- Botón con color neutro (terracota claro).
+- Menú desplegable con opciones claras y no técnicas.
+- Mensaje de confirmación:
+  - “La clienta ha sido excluida del panel. Puedes revertir esta acción desde Configuración → Clientas excluidas.”
+
+Esta funcionalidad:
+
+- Evita que clientas no recuperables aparezcan como “alto riesgo”.
+- Mejora la confianza de la propietaria en el dashboard.
+- Mantiene la coherencia del modelo sin alterar datos históricos.
+
 ---
 
 # 4. Presentación de resultados y explicabilidad
@@ -268,6 +315,29 @@ La vista de detalle incluye:
 - Gráfico de visitas y comportamiento temporal.   
 - Factores del modelo.
 
+## Exclusión de clientas del panel
+
+El panel de detalle incorpora la opción:
+
+`[ Excluir del panel ]` → **menú de motivos**
+
+Esta acción:
+
+- No borra datos históricos.
+- No afecta la capa gold.
+- No afecta el modelo entrenado.
+- Solo modifica la visualización del dashboard.
+
+Se utiliza para casos como:
+
+- Mudanza
+- Solicitud explícita de no contacto
+- Inactividad prolongada por motivos personales
+- Cambio de país
+- No pertenecer al público objetivo
+
+La exclusión evita interpretaciones erróneas del riesgo y mantiene la utilidad del ranking.
+
 ---
 
 # IA generativa (fuera del MVP)
@@ -292,6 +362,7 @@ El MVP incluirá:
 - Panel de detalle por clienta.
 - Gráfico inferior de tendencia de retorno y riesgo. 
 - Exportación de informes y casos (CSV / EXCEL / PDF).
+- Botón Excluir del panel (Manual, con menú desplegable. No incluye: Automatización de exclusión ni reglas automáticas basadas en comportamiento)
 
 Elementos solo mockup:
 
