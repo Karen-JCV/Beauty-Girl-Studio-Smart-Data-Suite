@@ -99,6 +99,8 @@ El resultado final será una plataforma denominada:
 
 ## **Beauty Girl Studio Smart Data Suite — Dashboard de Fidelización y Retorno**
 
+![Mockup del frontal](../assets/05_mockup_frontal.png)
+
 Incluye:
 
 - Análisis RFM por clienta
