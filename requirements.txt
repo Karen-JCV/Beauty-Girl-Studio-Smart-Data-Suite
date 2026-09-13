@@ -1,0 +1,44 @@
+# ============================================================================
+# requirements.txt — Beauty Girl Studio Smart Data Suite
+# ============================================================================
+# Instalación: pip install -r requirements.txt
+# Probado con Python 3.11+
+# ============================================================================
+
+# --- Configuración y entorno ---
+python-dotenv==1.0.1
+
+# --- Lectura de fuentes raw e ingeniería de datos ---
+pandas==2.2.2
+numpy==1.26.4
+openpyxl==3.1.2          # lectura de clientes.xlsx, reservas.xlsx, ventas.xlsx, items.xlsx, servicios.xlsx, transacciones.xlsx
+pyarrow==16.1.0           # motor Parquet (capas processed y gold)
+
+# --- Warehouse relacional ---
+# sqlite3 viene en la librería estándar de Python: no requiere entrada aquí.
+SQLAlchemy==2.0.30        # capa de acceso a beauty_studio.db (opcional pero recomendado sobre sqlite3 puro)
+
+# --- Ciencia de datos y modelado ---
+scikit-learn==1.5.0
+scipy==1.13.1
+shap==0.45.1              # explicabilidad del modelo (factores del modelo, ver contrato_analitico.md §3)
+
+# --- Visualización (EDA y notebooks) ---
+matplotlib==3.9.0
+seaborn==0.13.2
+plotly==5.22.0
+
+# --- Notebooks ---
+jupyter==1.0.0
+ipykernel==6.29.4
+
+# --- Dashboard ---
+streamlit==1.36.0
+
+# --- Exportación de reportes (05_diseno_frontal.md: CSV / Excel / PDF) ---
+xlsxwriter==3.2.0
+fpdf2==2.7.9
+
+# --- Testing y calidad de código (recomendado, no obligatorio para el MVP) ---
+#pytest==8.2.2
+#ruff==0.4.9

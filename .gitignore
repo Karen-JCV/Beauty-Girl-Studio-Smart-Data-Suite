@@ -1,0 +1,88 @@
+# ============================================================================
+# .gitignore — Beauty Girl Studio Smart Data Suite
+# ============================================================================
+
+# --- Secretos y entorno ---
+.env
+*.env
+!env.example
+
+# --- Datos con información personal o del negocio: nunca al repositorio ---
+# Raw: Excel originales exportados del sistema de gestión (nombres, teléfonos,
+# emails, RUT...). Ver docs/entregas/06_data_profiling.md
+data/raw/*
+!data/raw/.gitkeep
+
+# Local: tabla puente de identidad con PII (id_bridge_local.parquet) y
+# cualquier artefacto intermedio con datos personales.
+# Ver docs/entregas/07_resolucion_identidad.md §6
+data/local/*
+!data/local/.gitkeep
+
+# Processed: datos limpios pero aún a nivel de detalle operativo del negocio.
+data/processed/*
+!data/processed/.gitkeep
+
+# Warehouse: base de datos SQLite con las tablas relacionales.
+data/warehouse/*
+!data/warehouse/.gitkeep
+
+# Gold: datasets analíticos finales. Aunque ya están anonimizados
+# (id_cliente_anon, sin PII), siguen siendo datos reales del negocio de
+# Beauty Girl Studio y no se publican (ver README.md → Licencia).
+data/gold/*
+!data/gold/.gitkeep
+
+# Excepción explícita: nunca versionar ningún .xlsx/.parquet/.db suelto,
+# esté donde esté en el árbol del proyecto.
+*.xlsx
+*.xls
+*.db
+*.sqlite
+*.sqlite3
+!docs/assets/**
+
+# --- Modelos entrenados y artefactos de ML ---
+models/*.pkl
+models/*.joblib
+models/*.cbm
+mlruns/
+mlflow.db
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.python-version
+
+# --- Notebooks ---
+.ipynb_checkpoints/
+*.nbconvert.ipynb
+
+# --- Testing / linting / cache ---
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+
+# --- Streamlit ---
+.streamlit/secrets.toml
+
+# --- Editor / SO ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Logs ---
+*.log
+logs/
