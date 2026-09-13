@@ -4,6 +4,7 @@
 **Tarea:** Entrega 5 - Diseño del frontal y experiencia de usuario del producto  
 **Proyecto:** Beauty Girl Studio Smart Data Suite  
 **Fecha de entrega:** 23 de Agosto de 2026  
+Este documento se rige por el contrato analítico en `docs/architecture/contrato_analitico.md`
 
 ---
 

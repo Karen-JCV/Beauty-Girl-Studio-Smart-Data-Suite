@@ -4,6 +4,7 @@
 **Tarea:** Entrega 4 - Diseño del análisis y estrategia de modelado  
 **Proyecto:** Beauty Girl Studio Smart Data Suite  
 **Fecha de entrega:** 22 de Agosto de 2026  
+Este documento se rige por el contrato analítico en `docs/architecture/contrato_analitico.md`
 
 ---
 
