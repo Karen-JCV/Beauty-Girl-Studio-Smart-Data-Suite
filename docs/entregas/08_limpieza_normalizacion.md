@@ -22,7 +22,7 @@ Construir la capa `processed/` aplicando, de forma reproducible y auditable, tod
 | Fuente | Filas raw → clean | Columnas descartadas | Anonimización |
 |---|---|---|---|
 | `reservas.xlsx` | 12.309 → 12.197 (112 duplicados exactos eliminados) | `N° de Cliente`, `RUT`, `E-mail`, `Teléfono`, `Nº de sesión`, `Sesiones Totales`, `Comentario interno`, `Notas compartidas con cliente` (texto legal genérico, sin valor analítico), `Responsable creación`/`Responsable última modificación` (email de la propietaria/staff), `Local` (constante) | `Nombre`+`Apellido` → `id_cliente_anon` |
-| `ventas.xlsx` | 5.292 → 5.292 (0 duplicados) | `Nota` (100% nula), `Creado por`, `Local` (constante) | `Cliente` → `id_cliente_anon` |
+| `ventas.xlsx` | 5.292 → 5.290 (0 duplicados exactos; 2 pares de ventas fusionados por colisión de minuto, ver §3.3bis) | `Nota` (100% nula), `Creado por`, `Local` (constante) | `Cliente` → `id_cliente_anon` |
 | `items.xlsx` | 6.559 → 6.556 (3 duplicados exactos eliminados) | `Local` (constante) | `Cliente` → `id_cliente_anon` |
 | `transacciones.xlsx` | 6.020 → 6.020 (0 duplicados) | `Comprobante`, `Cuotas` (100% nula), `Comisión`, `Fecha de transferencia`, `Estado de pago` (no fiable, ver §3) | No aplica (esta fuente no tiene columna de cliente) |
 | `servicios.xlsx` | 54 → 54 | Ninguna | No aplica (catálogo, sin PII) |
@@ -77,7 +77,7 @@ items con clave_venta por fallback:  30.4%
 
 **Validación de la unión:** con esta lógica aplicada de forma idéntica en `ventas_clean` e `items_clean`, la cobertura de unión `items → ventas` por `clave_venta` es del **100%** — ninguna fila de `items` queda huérfana.
 
-### 3.2 `transacciones` — vinculación más limitada, y por qué
+### 3.2 `transacciones` — vinculación más limitada y por qué
 
 A diferencia de `ventas`/`items`, **`transacciones.xlsx` no tiene columna de cliente**. Esto significa que no se puede construir el mismo fallback (`Cliente + Fecha`) para el 30.7% de transacciones sin `ID Venta`: no hay nombre con el que emparejar.
 
@@ -87,17 +87,31 @@ A diferencia de `ventas`/`items`, **`transacciones.xlsx` no tiene columna de cli
 
 ---
 
+## 3.3 Corrección de privacidad detectada durante la validación: `clave_venta` no debe llevar el nombre en texto plano
+
+Durante la revisión del archivo generado se detectó que `clave_venta` para las filas de fallback (§3.1) se había construido como `"FB|{nombre_normalizado}|{fecha}"` — por ejemplo `"FB|nombre apellido|2023-02-23 05:36"`. **Normalizar un nombre (minúsculas, sin acentos) no lo anonimiza**: sigue siendo el nombre real y legible de una clienta y ese campo vivía en `ventas_clean.parquet` e `items_clean.parquet`, los archivos que se supone que ya no contienen PII.
+
+**Causa raíz:** la verificación de privacidad original (§4 más abajo) solo inspeccionó los *nombres de columna* buscando patrones como `nombre`/`cliente`/`email`, no el *contenido* de las celdas. Una columna con nombre neutro (`clave_venta`) puede filtrar PII en sus valores sin que ese chequeo lo detecte.
+
+**Corrección aplicada:** `clave_fallback()` ahora hashea la clave (`sha256(salt + "FB" + nombre_norm + fecha_minuto)`, igual que `id_cliente_anon`), en vez de concatenar el nombre en texto plano. La clave sigue siendo determinista (mismo nombre + misma fecha → mismo hash en `ventas` e `items`, preservando la unión), pero deja de ser legible.
+
+**Verificación reforzada:** se repitió la validación de privacidad, esta vez comparando el *contenido* de cada columna de tipo texto contra la lista completa de nombres normalizados de `clientes.xlsx` (632 clientas reales), en los cinco archivos de salida. Resultado: ningún nombre aparece en ninguna celda de ningún archivo. La cobertura de unión `items → ventas` se re-verificó tras el cambio y se mantiene en 100%.
+
+**Lección para el resto del pipeline:** En adelante, cualquier verificación de "sin PII" se revisará valores, no solo encabezados de columna — se deja como paso explícito en el checklist de la capa warehouse (paso 5).
+
+---
+
 ## 4. Reporte de ejecución (validado contra los datos reales)
 
 ```
 reservas:        12.309 -> 12.197 filas   (12.0% sin id_cliente_anon, esperado)
-ventas:           5.292 ->  5.292 filas   (0.0% sin id_cliente_anon; 29.4% clave por fallback; 9.6% identidad_ambigua_transaccional)
+ventas:           5.292 ->  5.290 filas   (0.0% sin id_cliente_anon; 29.4% clave por fallback; 9.6% identidad_ambigua_transaccional; 2 pares fusionados por colisión de minuto, ver §3.3bis)
 items:             6.559 ->  6.556 filas   (0.0% sin id_cliente_anon; 30.4% clave por fallback)
 transacciones:    6.020 ->  6.020 filas   (30.7% sin clave_venta, documentado y aceptado)
 servicios:           54 ->     54 filas
 ```
 
-**Verificación de privacidad:** se inspeccionaron las columnas de los cinco archivos de salida; ninguno contiene nombre, email, teléfono o RUT de clientas. El único campo `"Nombre"` que aparece es en `servicios_clean.parquet` y corresponde al nombre del servicio del catálogo (ej. *"Esmaltado permanente de Pies"*), no a una persona.
+**Verificación de privacidad (por contenido, no solo por nombre de columna — ver §3.3):** se comparó el valor de cada celda de texto de los cinco archivos de salida contra los 632 nombres normalizados de clientas reales. Ninguna celda de ningún archivo contiene un nombre de clienta. El único campo `"Nombre"` que aparece es en `servicios_clean.parquet` y corresponde al nombre del servicio del catálogo (ej. *"Esmaltado permanente de Pies"*), no a una persona.
 
 ---
 

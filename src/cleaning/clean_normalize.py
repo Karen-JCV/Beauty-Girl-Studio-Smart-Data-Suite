@@ -44,11 +44,23 @@ docs/entregas/08_limpieza_normalizacion.md):
 
 import argparse
 import hashlib
+import os
 import re
 import unicodedata
-from pathlib import Path
-
 import pandas as pd
+from pathlib import Path
+from dotenv import load_dotenv
+load_dotenv()
+
+# Mismo salt que src/identity/resolve_identity.py (variable ID_SALT en .env).
+# Se usa para que la clave de respaldo (fallback) sea irreversible: nunca
+# debe poder leerse un nombre de clienta a partir de clave_venta.
+SALT = os.getenv("ID_SALT")
+if not SALT:
+    raise RuntimeError(
+        "Falta la variable de entorno ID_SALT (ver .env.example). "
+        "clave_venta se genera con hash y no puede construirse sin salt."
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -69,12 +81,20 @@ def parsear_fecha(serie: pd.Series) -> pd.Series:
 
 
 def clave_fallback(nombre_norm: str, fecha) -> str:
-    """Clave de respaldo cuando no hay ID interno / ID Venta: Cliente + minuto."""
+    """
+    Clave de respaldo cuando no hay ID interno / ID Venta: Cliente + minuto.
+
+    IMPORTANTE: se hashea (sha256 + salt), igual que id_cliente_anon. Un
+    nombre normalizado en texto plano sigue siendo el nombre real de una 
+    persona -- normalizar no es anonimizar. Esta clave sale de processed/ 
+    hacia el warehouse, así que no puede contener nada legible.
+    """
     if pd.isna(fecha):
         minuto = "sin_fecha"
     else:
         minuto = pd.Timestamp(fecha).strftime("%Y-%m-%d %H:%M")
-    return f"FB|{nombre_norm}|{minuto}"
+    crudo = f"{SALT}|FB|{nombre_norm}|{minuto}"
+    return "FB_" + hashlib.sha256(crudo.encode("utf-8")).hexdigest()[:16]
 
 
 # ---------------------------------------------------------------------------
@@ -99,7 +119,7 @@ def construir_mapa_identidad(bridge: pd.DataFrame) -> pd.DataFrame:
     nombre_norm quedó repartido en 2+ id_cliente_anon distintos (los 46
     nombres / 95 identidades de la Entrega 07). Es en ESOS casos, y solo en
     esos, donde ventas/items no pueden distinguir a qué persona pertenece
-    cada transacción (no tienen teléfono/email) y por eso se colapsan en
+    cada transacción (no tienen teléfono/email), y por eso se colapsan en
     una identidad canónica marcada con este flag.
     """
     n_identidades_por_nombre = bridge.groupby("nombre_norm")["id_cliente_anon"].nunique()
@@ -177,18 +197,45 @@ def limpiar_ventas(ventas: pd.DataFrame, mapa: pd.DataFrame) -> pd.DataFrame:
 
     df = mapear_a_id_cliente(df, "nombre_norm", mapa)
 
+ # --- Colisiones de clave_venta (solo pueden darse en el fallback: el
+    # sistema de origen solo guarda fecha con precisión de minuto, sin
+    # segundos, así que dos ventas del mismo cliente en el mismo minuto no
+    # se pueden distinguir por fecha). Verificado contra los datos reales:
+    # 2 grupos / 4 filas (0.08% de las ventas), en ambos casos mismo
+    # cliente + mismo minuto -> se interpreta como la MISMA visita
+    # registrada en dos cobros, y se fusiona en una sola fila de
+    # fact_ventas sumando los montos. Ver docs/entregas/09_warehouse.md.
+    df["ID"] = df["ID"].astype(str)
+    agregado = (
+        df.groupby("clave_venta", as_index=False)
+        .agg(
+            id_cliente_anon=("id_cliente_anon", "first"),
+            identidad_ambigua_transaccional=("identidad_ambigua_transaccional", "first"),
+            clave_venta_origen=("clave_venta_origen", "first"),
+            fecha=("fecha", "first"),
+            monto_venta=("Monto venta", "sum"),
+            monto_a_pagar=("Monto a pagar", "sum"),
+            monto_pendiente=("Monto pendiente", "sum"),
+            ids_venta_originales=("ID", lambda s: ",".join(sorted(s))),
+            n_ventas_fusionadas=("ID", "count"),
+        )
+    )
+    agregado["id_venta"] = agregado["ids_venta_originales"].str.split(",").str[0].astype(int)
+
     columnas_finales = [
+        "id_venta",
         "id_cliente_anon",
         "identidad_ambigua_transaccional",
         "clave_venta",
         "clave_venta_origen",
-        "ID",
         "fecha",
-        "Monto venta",
-        "Monto a pagar",
-        "Monto pendiente",
+        "monto_venta",
+        "monto_a_pagar",
+        "monto_pendiente",
+        "ids_venta_originales",
+        "n_ventas_fusionadas",
     ]
-    return df[columnas_finales]
+    return agregado[columnas_finales]
 
 
 def limpiar_items(items: pd.DataFrame, mapa: pd.DataFrame) -> pd.DataFrame:
