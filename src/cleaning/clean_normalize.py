@@ -47,10 +47,8 @@ import hashlib
 import os
 import re
 import unicodedata
-import pandas as pd
 from pathlib import Path
-from dotenv import load_dotenv
-load_dotenv()
+import pandas as pd
 
 # Mismo salt que src/identity/resolve_identity.py (variable ID_SALT en .env).
 # Se usa para que la clave de respaldo (fallback) sea irreversible: nunca
@@ -197,7 +195,7 @@ def limpiar_ventas(ventas: pd.DataFrame, mapa: pd.DataFrame) -> pd.DataFrame:
 
     df = mapear_a_id_cliente(df, "nombre_norm", mapa)
 
- # --- Colisiones de clave_venta (solo pueden darse en el fallback: el
+    # --- Colisiones de clave_venta (solo pueden darse en el fallback: el
     # sistema de origen solo guarda fecha con precisión de minuto, sin
     # segundos, así que dos ventas del mismo cliente en el mismo minuto no
     # se pueden distinguir por fecha). Verificado contra los datos reales:
@@ -245,6 +243,14 @@ def limpiar_items(items: pd.DataFrame, mapa: pd.DataFrame) -> pd.DataFrame:
     df["nombre_norm"] = df["Cliente"].map(normalizar_nombre)
     df["fecha_venta"] = parsear_fecha(df["Fecha venta"])
     df["fecha_reserva"] = parsear_fecha(df["Fecha reserva"])
+
+    # Higiene de texto en campos categóricos: se detectó "PROMOCIONES "
+    # (con espacio final) en Categoría, que sin trim generaría una columna
+    # dummy con nombre sucio en el paso de features. Se aplica de forma
+    # preventiva a todos los campos de texto libre de esta fuente, no solo
+    # al que causó el hallazgo.
+    for col in ["Categoría", "Nombre item", "Tipo item", "Prestador"]:
+        df[col] = df[col].astype(str).str.strip().replace({"nan": pd.NA})
 
     tiene_id_venta = df["ID Venta"].notna()
     df["clave_venta"] = df["ID Venta"].astype(str)
