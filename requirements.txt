@@ -19,7 +19,10 @@ pyarrow==16.1.0           # motor Parquet (capas processed y gold)
 SQLAlchemy==2.0.30        # capa de acceso a beauty_studio.db (opcional pero recomendado sobre sqlite3 puro)
 
 # --- Ciencia de datos y modelado ---
-scikit-learn==1.5.0
+scikit-learn==1.5.0       # IMPORTANTE: fijado <1.6 a propósito. src/model/train_model.py y
+                          # evaluar_modelo.py usan CalibratedClassifierCV(rf, cv="prefit"), API
+                          # eliminada en 1.6 (reemplazada por FrozenEstimator) y removida del
+                          # todo en 1.8. Si se sube de versión, hay que migrar esa única línea.
 scipy==1.13.1
 shap==0.45.1              # explicabilidad del modelo (factores del modelo, ver contrato_analitico.md §3)
 
