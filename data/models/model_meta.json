@@ -1,0 +1,28 @@
+{
+  "feature_cols": [
+    "recency_dias",
+    "frequency_visitas",
+    "monetary_total",
+    "ticket_medio",
+    "antiguedad_dias",
+    "usa_promociones",
+    "categoria_favorita_CEJAS Y PESTAÑAS",
+    "categoria_favorita_EXTENSIONES DE PESTAÑAS",
+    "categoria_favorita_EXTENSIÓN DE UÑAS",
+    "categoria_favorita_HIDRATACION",
+    "categoria_favorita_MANICURA RUSA",
+    "categoria_favorita_MANICURE PERMANENTE",
+    "categoria_favorita_Otros",
+    "categoria_favorita_PEDICURE",
+    "categoria_favorita_PROMOCIONES ",
+    "segmento_rfm_Campeonas",
+    "segmento_rfm_En_riesgo",
+    "segmento_rfm_Inactivas",
+    "segmento_rfm_Leales",
+    "segmento_rfm_Sin_segmentar"
+  ],
+  "umbral_decision": 0.4468,
+  "umbral_bajo": 91.58,
+  "umbral_alto": 97.33,
+  "fecha_entrenamiento": "2026-09-22T18:55:18.970467+00:00"
+}

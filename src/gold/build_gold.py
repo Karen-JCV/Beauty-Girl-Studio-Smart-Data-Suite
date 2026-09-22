@@ -171,6 +171,21 @@ def construir_gold_cliente_snapshot(
         )
         agg = agg.merge(cat_favorita.rename("categoria_favorita"), on="id_cliente_anon", how="left")
 
+        # prestador habitual (moda entre las visitas hasta el corte). Se
+        # conserva SOLO para mostrar en el frontal (mockup de la Entrega 05:
+        # "Prestador habitual"); el contrato analítico §4 lo excluye
+        # explícitamente como variable del modelo.
+        prestador_habitual = (
+            hasta_corte.dropna(subset=["prestador"])
+            .groupby(["id_cliente_anon", "prestador"])
+            .size()
+            .reset_index(name="n")
+            .sort_values("n", ascending=False)
+            .groupby("id_cliente_anon")
+            .first()["prestador"]
+        )
+        agg = agg.merge(prestador_habitual.rename("prestador_habitual"), on="id_cliente_anon", how="left")
+
         usa_promo = (
             hasta_corte.groupby("id_cliente_anon")["categoria_servicio"]
             .apply(lambda s: bool((s == "PROMOCIONES").any()))
@@ -208,6 +223,7 @@ def construir_gold_cliente_snapshot(
         "antiguedad_dias",
         "usa_promociones",
         "categoria_favorita",
+        "prestador_habitual",
         "segmento_rfm",
         "identidad_ambigua_transaccional",
         "retorna_en_90_dias",
