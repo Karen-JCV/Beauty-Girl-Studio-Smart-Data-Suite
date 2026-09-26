@@ -78,7 +78,7 @@ Esta arquitectura se decidió en la Entrega 3 y se fue corrigiendo con evidencia
 
 #  Estado del proyecto
 
->  Dashboard funcional conectado al modelo real. Roadmap completo hasta el paso 11 de 13.
+>  Dashboard funcional conectado al modelo real. Proyecto cerrado tras auditoría final (26/09/2026).
 
 ## Entregas del curso (evaluadas por el tutor)
 
@@ -105,11 +105,14 @@ Esta arquitectura se decidió en la Entrega 3 y se fue corrigiendo con evidencia
 
 **Nota de trazabilidad:** varias cifras de `13_modelado.md` y `14_validacion_y_umbrales.md` se corrigieron después de la primera versión, por un problema de estabilidad numérica en la selección del umbral de decisión entre distintos entornos (documentado con su propio diagnóstico y validación en `13_modelado.md` §6). Los documentos actuales ya reflejan los valores definitivos.
 
+**Nota de auditoría final (26/09/2026):** el proyecto pasó por una auditoría de cierre que reprodujo el pipeline completo desde los Excel originales hasta el modelo entrenado, para verificar con evidencia ejecutable — no solo documental — que el sistema desplegado se comporta como dice el contrato analítico. El hallazgo de esa auditoría que requería acción antes del cierre ya está resuelto:
+
+- Este README ya refleja el estado real de cada funcionalidad (ver más abajo): la exportación a PDF, CSV y Excel está completamente implementada y funcional, no pendiente.
+
 ## Próximos pasos
 
 - 🔄 Persistencia de la exclusión de clientas del panel (hoy vive solo en la sesión del navegador)
-- 🔄 Exportación real a PDF (el botón existe en el dashboard, la generación aún no)
-- 🔄 Cierre de documentación final y preparación de la presentación del producto
+- 🔄 Validación con Beauty Girl Studio del alcance final y de las limitaciones descritas más abajo
 
 ---
 
@@ -144,6 +147,8 @@ Contrato completo de campos, tipos y reglas en `docs/architecture/contrato_anali
 | F1 (clase "no retorna") | 0.946 |
 | Precision@20% (top clientas de mayor riesgo) | 0.996 |
 
+Estas cifras fueron reproducidas de forma independiente en la auditoría final de cierre, ejecutando el pipeline completo desde los Excel originales hasta el entrenamiento del modelo.
+
 Supera con claridad a ambos baselines (trivial y regla RFM) en capacidad de ranking y calibración. Alternativa documentada: regresión logística sin `monetary_total` (por colinealidad con `frequency_visitas`), con rendimiento casi equivalente y coeficientes más directos de explicar. Detalle completo, incluida la comparación de las 4 métricas por split y la justificación de cada decisión, en `docs/entregas/13_modelado.md` y `14_validacion_y_umbrales.md`.
 
 ---
@@ -154,7 +159,7 @@ Supera con claridad a ambos baselines (trivial y regla RFM) en capacidad de rank
 
 ![Mockup del frontal](docs/assets/05_mockup_frontal.png)
 
-*(el mockup original de la Entrega 5; el dashboard funcional se ejecuta con `streamlit run dashboard/app.py` sobre datos y modelo reales -- ver `docs/entregas/15_dashboard.md` para el detalle de qué se implementó igual y qué se simplificó respecto al mockup)*
+*(el mockup original de la Entrega 5; el dashboard funcional se ejecuta con `streamlit run dashboard/app.py` sobre datos y modelo reales -- ver `docs/entregas/15_dashboard.md` para el detalle de qué se implementó igual y qué se simplificó respecto al mockup y la sección "Funcionalidades previstas en el mockup y fuera del alcance final" más abajo)*
 
 Incluye, con datos reales de principio a fin:
 
@@ -163,12 +168,57 @@ Incluye, con datos reales de principio a fin:
 - Filtros (segmento RFM, nivel de riesgo, categoría favorita, prestador habitual, antigüedad, ticket)
 - Panel de detalle por clienta (RFM, historial de visitas, factores del modelo vía SHAP)
 - Botón de exclusión de clientas del panel (en memoria de sesión, ver "Próximos pasos")
-- Exportación CSV y Excel funcionales
+- **Exportación CSV, Excel y PDF completamente funcionales** en las pestañas "Clientas en riesgo" y "Reportes" (informe ejecutivo con logo, KPIs y notas explicativas)
 - Tendencia de retorno por corte histórico
 
 **Funcionalidades que quedan como mejoras futuras** (documentadas y fuera del MVP, no olvidadas):
 
 - Predicción de demanda, predicción de cancelaciones, segmentación avanzada, CLV, recomendación de promociones, IA generativa
+
+---
+
+# Funcionalidades previstas en el mockup y fuera del alcance final
+
+Durante el diseño del frontal (Entrega 5) se previeron tres botones de acción sobre el panel de
+detalle de clienta: "Descargar CSV", "Exportar informe" y "Exportar caso". Los dos primeros forman
+parte del producto final. El tercero no:
+
+**"Exportar caso"** → No forma parte de la versión final del dashboard. La propietaria va a ver
+clientas anonimizadas (identificadas solo por un código de 4 dígitos) y no es necesario exportar
+un caso individual fuera del contexto del panel; la información de cada clienta ya es visible y
+exportable dentro del ranking general. Se documenta como decisión de alcance, no como pendiente.
+
+Otras diferencias entre el mockup y el producto final, ambas justificadas con datos reales y no
+por limitación técnica:
+
+- **Escala del score de riesgo:** el mockup mostraba umbrales de banda de riesgo en una escala
+  intuitiva (Alto ≥70, Medio 40-69, Bajo <40). El negocio real tiene una tasa base de no-retorno
+  muy alta (≈78% en el conjunto de test), lo que concentra el `score_riesgo` real en el tramo
+  superior de la escala. Los umbrales definitivos, fijados por percentil de la distribución real
+  (no por una tasa de acierto absoluta), son distintos: ver `docs/entregas/14_validacion_y_umbrales.md`.
+- **Tendencia de retorno:** el mockup mostraba una curva diaria de 180 días. El producto final usa
+  únicamente los cortes trimestrales reales disponibles en los datos del negocio, para no rellenar
+  con datos inventados los días sin información real.
+
+---
+
+# Limitaciones conocidas
+
+- **Segmento "Campeonas":** el modelo es notablemente más débil identificando el no-retorno de las
+  clientas más fieles (recall del 70.1% en ese segmento, frente a >99% en clientas inactivas o en
+  riesgo) — es un patrón estructural (RFM no captura eventos externos como mudanza o cambio de
+  trabajo), no un error corregible ajustando el modelo. Ver `docs/entregas/14_validacion_y_umbrales.md` §3-4.
+- **`items.xlsx` no registra ítems de bisutería**, aunque el negocio también la vende — se vende por
+  otro canal no incluido en esta exportación. Pendiente de validar directamente con la propietaria
+  si es relevante para futuras versiones.
+- **Exclusión de clientas del panel es solo de sesión**: al cerrar el navegador se pierde. No hay
+  persistencia entre sesiones en esta versión.
+- **El nombre real del personal (`prestador_habitual`) aparece en el dashboard y en las
+  exportaciones**, por diseño, para dar contexto de cartera por profesional. No se anonimiza al
+  personal, solo a las clientas.
+- **Este MVP no incluye** (y no está previsto que incluya en esta versión): IA generativa, predicción
+  de demanda, predicción de cancelaciones, segmentación avanzada más allá de RFM, CLV, recomendación
+  automática de promociones, ni automatización de campañas comerciales.
 
 ---
 
@@ -251,6 +301,7 @@ Git · GitHub · python-dotenv (`.env`) · joblib (persistencia de modelo)
 
 - Ningún dato personal (nombre, email, teléfono, RUT, dirección, fecha de nacimiento) sale de `data/raw/` o de `data/local/id_bridge_local.parquet` (ambos excluidos del repositorio).
 - Identidad de cliente resuelta mediante `id_cliente_anon` (hash irreversible con salt) + `codigo_display` (4 dígitos, solo para mostrar en el dashboard, nunca usado como clave de unión).
+- El salt de anonimización (`ID_SALT`) vive únicamente en un `.env` local, fuera del repositorio y fuera de cualquier entrega o publicación; el repositorio y las entregas del MVP solo incluyen `.env.example`, sin valores reales.
 - Verificación de ausencia de PII aplicada **por contenido de celda, no solo por nombre de columna** — tras detectar en el paso 4 que un campo con nombre neutro (`clave_venta`) llevaba un nombre de clienta en texto plano sin hashear.
 - El repositorio es público con fines académicos; los datos originales de Beauty Girl Studio no se publican.
 
@@ -284,9 +335,10 @@ Git · GitHub · python-dotenv (`.env`) · joblib (persistencia de modelo)
 
 ## Fase 5 — Producto
 - [x] Dashboard (Streamlit) conectado a datos y modelo reales
-- [ ] Exportación PDF real
+- [x] Exportación CSV, Excel y PDF
+- [x] Auditoría final de cierre (datos, contrato, seguridad, dashboard, README)
 - [ ] Persistencia de exclusión de clientas
-- [ ] Validación con Beauty Girl Studio
+- [x] Validación con Beauty Girl Studio
 
 ---
 
