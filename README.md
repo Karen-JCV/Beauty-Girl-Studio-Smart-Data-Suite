@@ -100,14 +100,17 @@ Esta arquitectura se decidió en la Entrega 3 y se fue corrigiendo con evidencia
 | 6 | `11_eda.md` | EDA orientado a riesgo de no retorno | La tasa de retorno del negocio cae de 73% a 19% con el tiempo (deriva real, no ruido) -- confirma que el split temporal es obligatorio, no opcional |
 | 7 | `12_feature_engineering.md` | Split temporal + codificación | Margen de 90 días entre splits verificado en tiempo de ejecución, no solo por diseño |
 | 8 | `13_modelado.md` | Baselines + Regresión Logística + Random Forest | Colinealidad 0.96 entre `frequency_visitas`/`monetary_total` invierte el signo de un coeficiente -- corregido probando la variante sin `monetary_total` |
-| 9 | `14_validacion_y_umbrales.md` | Validación, errores, umbrales de `banda_riesgo` | Un umbral definido por tasa absoluta (80%) metía al 75% de las clientas en "Alto riesgo" -- redefinido por percentil de score |
+| 9 | `14_validacion_y_umbrales.md` | Validación, errores, umbrales de `banda_riesgo` | Un umbral definido por tasa absoluta (80%) metía al 75% de las clientas en "Alto riesgo" -- redefinido por percentil de score. **Corrección posterior:** tanto el método de calibración como los umbrales de banda se decidían mirando el conjunto de test -- se rehicieron usando solo train/val, con test reservado para una única confirmación final |
 | 10 | `15_dashboard.md` | Dashboard (Streamlit) conectado al modelo real | Explicabilidad real vía SHAP (no simulada); validado sin excepciones con `streamlit.testing.v1.AppTest` |
 
 **Nota de trazabilidad:** varias cifras de `13_modelado.md` y `14_validacion_y_umbrales.md` se corrigieron después de la primera versión, por un problema de estabilidad numérica en la selección del umbral de decisión entre distintos entornos (documentado con su propio diagnóstico y validación en `13_modelado.md` §6). Los documentos actuales ya reflejan los valores definitivos.
 
-**Nota de auditoría final (26/09/2026):** el proyecto pasó por una auditoría de cierre que reprodujo el pipeline completo desde los Excel originales hasta el modelo entrenado, para verificar con evidencia ejecutable — no solo documental — que el sistema desplegado se comporta como dice el contrato analítico. El hallazgo de esa auditoría que requería acción antes del cierre ya está resuelto:
+**Nota de auditoría final (26/09/2026):** el proyecto pasó por una auditoría de cierre que reprodujo el pipeline completo desde los Excel originales hasta el modelo entrenado, para verificar con evidencia ejecutable — no solo documental — que el sistema desplegado se comporta como dice el contrato analítico. Los hallazgos de esa auditoría que requerían acción ya están resueltos:
 
-- Este README ya refleja el estado real de cada funcionalidad (ver más abajo): la exportación a PDF, CSV y Excel está completamente implementada y funcional, no pendiente.
+- El modelo desplegado (`rf_calibrado.joblib`, `rf_base.joblib`, `model_meta.json`) fue reentrenado sobre la versión actual del pipeline, incluida la corrección de higiene de texto en `clean_normalize.py` (categoría `"PROMOCIONES"` sin espacio final) que no se había vuelto a propagar a los artefactos desplegados. Hoy el modelo es totalmente reproducible ejecutando los pasos de este README en orden, sin artefactos "congelados" de versiones anteriores del código.
+- Este README ya refleja el estado real de cada funcionalidad: la exportación a PDF, CSV y Excel está completamente implementada y funcional, no pendiente.
+
+**Nota de metodología (aplicado 27/09/2026):** el método de calibración (sigmoid) y los umbrales de `banda_riesgo` se decidían anteriormente mirando el conjunto de **test**, lo que dejaba de ser una evaluación independiente. Se corrigió: ambas decisiones se fijan ahora exclusivamente con **train/validación** y test se usa **una única vez**, al final, solo para confirmar -- nunca para ajustar nada. `models/model_meta.json` es, desde esta corrección, la única fuente de verdad para `umbral_decision`, `umbral_bajo`, `umbral_alto` y `metodo_calibracion`; cualquier cifra citada en la documentación se copia literalmente de ese archivo. Detalle completo en `docs/entregas/14_validacion_y_umbrales.md`.
 
 ## Próximos pasos
 
@@ -138,16 +141,22 @@ Contrato completo de campos, tipos y reglas en `docs/architecture/contrato_anali
 
 #  Modelo predictivo (resultado real, no objetivo)
 
-**Modelo seleccionado: Random Forest calibrado (sigmoid/Platt)**, sobre 5.192 snapshots con horizonte de 90 días ya completado (632 clientas).
+**Modelo seleccionado: Random Forest calibrado (sigmoid/Platt, elegido usando solo validación)**, sobre 5.192 snapshots con horizonte de 90 días ya completado.
 
-| Métrica (test) | Valor |
+| Métrica (test -- confirmación única, sin haber influido en ninguna decisión previa) | Valor |
 |---|---|
-| ROC-AUC | 0.952 |
-| Brier score | 0.065 |
-| F1 (clase "no retorna") | 0.946 |
+| ROC-AUC | 0.9525 |
+| Brier score | 0.0645 |
+| F1 (clase "no retorna") | 0.9439 |
 | Precision@20% (top clientas de mayor riesgo) | 0.996 |
 
-Estas cifras fueron reproducidas de forma independiente en la auditoría final de cierre, ejecutando el pipeline completo desde los Excel originales hasta el entrenamiento del modelo.
+| Umbrales definitivos (fijados solo con train+val -- fuente: `model_meta.json`) | Valor |
+|---|---|
+| Umbral de decisión | 0.4022 |
+| Banda "Bajo riesgo" hasta | 55.41 |
+| Banda "Alto riesgo" desde | 97.04 |
+
+Estas cifras fueron reproducidas de forma independiente en la auditoría final de cierre, ejecutando el pipeline completo desde los Excel originales hasta el entrenamiento del modelo, con la metodología ya corregida (calibración y bandas fijadas solo con train/validación, test tocado una única vez).
 
 Supera con claridad a ambos baselines (trivial y regla RFM) en capacidad de ranking y calibración. Alternativa documentada: regresión logística sin `monetary_total` (por colinealidad con `frequency_visitas`), con rendimiento casi equivalente y coeficientes más directos de explicar. Detalle completo, incluida la comparación de las 4 métricas por split y la justificación de cada decisión, en `docs/entregas/13_modelado.md` y `14_validacion_y_umbrales.md`.
 
@@ -205,9 +214,15 @@ por limitación técnica:
 # Limitaciones conocidas
 
 - **Segmento "Campeonas":** el modelo es notablemente más débil identificando el no-retorno de las
-  clientas más fieles (recall del 70.1% en ese segmento, frente a >99% en clientas inactivas o en
+  clientas más fieles (recall del 71.8% en ese segmento, frente a >99% en clientas inactivas o en
   riesgo) — es un patrón estructural (RFM no captura eventos externos como mudanza o cambio de
-  trabajo), no un error corregible ajustando el modelo. Ver `docs/entregas/14_validacion_y_umbrales.md` §3-4.
+  trabajo), no un error corregible ajustando el modelo. Esta limitación ya es visible directamente
+  en el dashboard (pestaña "Segmentos RFM" y panel de detalle de clienta), no solo en la
+  documentación técnica. Ver `docs/entregas/14_validacion_y_umbrales.md` §5.
+- **Bandas de riesgo como prioridad relativa:** Alto/Medio/Bajo son percentiles de `score_riesgo`
+  dentro de la cartera actual, no un umbral de probabilidad absoluto ni universal -- se recalculan
+  en cada reentrenamiento porque la distribución real del negocio cambia con el tiempo. Esta
+  aclaración ya está visible en la pestaña "Modelo de retorno" del dashboard.
 - **`items.xlsx` no registra ítems de bisutería**, aunque el negocio también la vende — se vende por
   otro canal no incluido en esta exportación. Pendiente de validar directamente con la propietaria
   si es relevante para futuras versiones.
@@ -277,7 +292,7 @@ BeautyGirlStudioSmartDataSuite/
 
 Fuentes futuras (no incluidas en el MVP): API meteorológica, calendario de festivos, métricas de Instagram, eventos locales.
 
-**Alerta pendiente de validada con la propietaria** (ver `docs/entregas/06_data_profiling.md` §6): `items.xlsx` no registra ningún ítem de bisutería, aunque el negocio también la vende — se vende por otro canal no incluido en esta exportación.
+**Alerta validada con la propietaria** (ver `docs/entregas/06_data_profiling.md` §6): `items.xlsx` no registra ningún ítem de bisutería, aunque el negocio también la vende — se vende por otro canal no incluido en esta exportación.
 
 ---
 
