@@ -129,12 +129,29 @@ Solo estas variables, todas calculadas **exclusivamente con información disponi
 
 ## 7. Umbrales de banda de riesgo
 
-- Valores **provisionales** de partida: `Alto ≥ 70`, `Medio 40–69`, `Bajo < 40` (sobre `score_riesgo`).
-- Estado: **no validados**. Deben ajustarse con:
-  - Distribución real de `score_riesgo` en el dataset de validación/test.
-  - Coste/beneficio estimado de las acciones comerciales (ej. coste de contactar a una clienta vs. coste de perderla).
-- Hasta que exista esa validación, el dashboard debe mostrar el rótulo **"Umbrales provisionales"** junto a la banda de riesgo (tal como ya se incorporó en el mockup de E5).
-- Cualquier cambio de umbral se documenta en este archivo (sección de changelog, §11) antes de desplegarse.
+- Valores **provisionales** de partida (ya superados, se conservan aquí solo como
+  referencia histórica del punto de partida): `Alto ≥ 70`, `Medio 40–69`, `Bajo < 40`
+  (sobre `score_riesgo`).
+- **Estado: validados.** Fijados por percentil de `score_riesgo` calculado **exclusivamente
+  sobre train+val** (nunca sobre test, para no contaminar la evaluación final — ver
+  `docs/entregas/14_validacion_y_umbrales.md` §2), dimensionando las bandas a un volumen de
+  trabajo manejable para la propietaria: Alto = 25% de mayor riesgo, Bajo = 35% de menor
+  riesgo, Medio = el resto.
+- **Fuente única de verdad:** `models/model_meta.json` (`umbral_bajo`, `umbral_alto`,
+  `umbral_decision`, `metodo_calibracion`). Cualquier cifra citada en documentación,
+  README o el dashboard debe copiarse literalmente de ese archivo, generado por
+  `persistir_modelo.py` — nunca transcribirse a mano. Si un número citado en algún
+  documento no coincide con `model_meta.json`, el artefacto manda y el documento está
+  desactualizado.
+- Las bandas representan **prioridad operativa relativa** dentro de la cartera actual en
+  el momento del último reentrenamiento, no un umbral de probabilidad absoluto ni
+  universal — así debe explicarse en cualquier pantalla donde se muestren (ya
+  implementado en la pestaña "Modelo de retorno" del dashboard).
+- Se recalculan automáticamente cada vez que se reentrena el modelo (la distribución real
+  del negocio cambia con el tiempo, ver `11_eda.md` §1); no se congelan de forma
+  indefinida.
+- Cualquier cambio de umbral se documenta en este archivo (sección de changelog, §11)
+  antes de desplegarse.
 
 ---
 
@@ -176,6 +193,7 @@ Estos elementos no deben aparecer en el pipeline, el modelo ni el frontal hasta 
 | Versión | Fecha | Cambio |
 |---|---|---|
 | v1.0 | *13-09-2026* | Documento creado consolidando definiciones de E4 y E5 tras feedback recibido. Fija score/probabilidad/riesgo/bandas/incertidumbre y elimina "confianza" inventada. |
+| v1.1 | *27-09-2026* | Corrección tras feedback del tutor (E4 y E5): (1) el método de calibración y los umbrales de `banda_riesgo` se decidían mirando el conjunto de test, contaminándolo como evaluación independiente — ahora se fijan exclusivamente con train/val y test se usa una única vez para confirmar; (2) §7 pasa de "no validados" a "validados", con `models/model_meta.json` como fuente única de verdad; (3) se añade la aclaración de que las bandas son prioridad relativa, no probabilidad absoluta, visible ahora en el dashboard; (4) se corrige la categoría `"PROMOCIONES "` con espacio final que persistía en los artefactos desplegados desde antes de aplicar la higiene de texto en `clean_normalize.py` y se regeneran Gold/modelo/scoring desde cero. |
 
 ---
 
@@ -183,7 +201,15 @@ Estos elementos no deben aparecer en el pipeline, el modelo ni el frontal hasta 
 
 - [x] ¿Todo campo mostrado en el frontal está definido en §3?
 - [x] ¿Las métricas reportadas están calculadas sobre la clase `no retorna`?
-- [x] ¿Los umbrales de banda de riesgo llevan la etiqueta "provisional" si no han sido validados con datos?
-- [ ] ¿Alguna variable de entrada usa información posterior a `fecha_referencia`?
-- [ ] ¿Aparece algún elemento de la lista de "fuera del MVP" (§9) en el pipeline o el dashboard?
-- [ ] ¿El indicador de incertidumbre se muestra sin estar formalmente validado?
+- [x] Los umbrales de banda de riesgo **ya están validados** (§7); no llevan etiqueta
+      "provisional" porque no corresponde — se fijaron con train+val, nunca con test.
+- [x] ¿Alguna variable de entrada usa información posterior a `fecha_referencia`? —
+      **No.** Verificado en `build_gold.py` (filtro `fecha_visita <= fecha_referencia`
+      en toda variable) y confirmado re-ejecutando el pipeline completo desde los datos
+      originales.
+- [x] ¿Aparece algún elemento de la lista de "fuera del MVP" (§9) en el pipeline o el
+      dashboard? — **No.** Verificado por búsqueda directa en el código (0 ocurrencias de
+      IA generativa, CLV, predicción de demanda/cancelación, "hallazgos con IA", etc.).
+- [x] ¿El indicador de incertidumbre se muestra sin estar formalmente validado? — **No.**
+      El campo `indicador_incertidumbre` no existe todavía en ningún artefacto ni en el
+      dashboard (0 ocurrencias de "incertidumbre" en el código).
