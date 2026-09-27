@@ -49,6 +49,8 @@ import re
 import unicodedata
 from pathlib import Path
 import pandas as pd
+from dotenv import load_dotenv
+load_dotenv()
 
 # Mismo salt que src/identity/resolve_identity.py (variable ID_SALT en .env).
 # Se usa para que la clave de respaldo (fallback) sea irreversible: nunca
