@@ -29,27 +29,39 @@ from pathlib import Path
 import joblib
 
 sys.path.insert(0, str(Path(__file__).parent))
-from evaluar_modelo import analizar_errores, calcular_umbrales_banda_riesgo, entrenar_modelo_final
+from evaluar_modelo import calcular_umbrales_banda_riesgo, confirmar_en_test, entrenar_modelo_final
 
 
 def ejecutar(gold_dir: Path, models_dir: Path) -> dict:
     models_dir.mkdir(parents=True, exist_ok=True)
 
+    # 1) Entrenar y fijar calibración + umbral de decisión -- SOLO train/val
     entrenamiento = entrenar_modelo_final(gold_dir)
-    resultado, _, _ = analizar_errores(
-        entrenamiento["splits"], entrenamiento["proba_test"], entrenamiento["umbral"], models_dir
-    )
-    _, umbral_bajo, umbral_alto, evidencia_bandas = calcular_umbrales_banda_riesgo(resultado, models_dir)
+
+    # 2) Fijar bandas de riesgo por percentil -- SOLO train+val (nunca test,
+    #    corrección aplicada tras feedback del tutor de la Entrega 4)
+    _, umbral_bajo, umbral_alto = calcular_umbrales_banda_riesgo(entrenamiento, models_dir)
+
+    # 3) Confirmación única en test -- genera los gráficos/evidencia de
+    #    cierre pero NO cambia ni el modelo ni ninguno de los umbrales ya
+    #    fijados en los pasos 1) y 2)
+    confirmar_en_test(entrenamiento, umbral_bajo, umbral_alto, models_dir)
 
     joblib.dump(entrenamiento["modelo"], models_dir / "rf_calibrado.joblib")
     joblib.dump(entrenamiento["rf_base"], models_dir / "rf_base.joblib")
 
     meta = {
         "feature_cols": entrenamiento["feature_cols"],
+        "metodo_calibracion": entrenamiento["metodo_calibracion"],
         "umbral_decision": round(float(entrenamiento["umbral"]), 4),
         "umbral_bajo": round(float(umbral_bajo), 2),
         "umbral_alto": round(float(umbral_alto), 2),
         "fecha_entrenamiento": datetime.now(timezone.utc).isoformat(),
+        "nota_bandas": (
+            "Las bandas Alto/Medio/Bajo son percentiles de score_riesgo "
+            "dentro de la cartera actual (prioridad operativa relativa), "
+            "no umbrales de probabilidad absoluta."
+        ),
     }
     with open(models_dir / "model_meta.json", "w", encoding="utf-8") as f:
         json.dump(meta, f, ensure_ascii=False, indent=2)

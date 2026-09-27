@@ -26,6 +26,18 @@ Reglas aplicadas (ver docs/entregas/13_modelado.md):
     separado en val y en test -- no alcanza con un número agregado, dado
     que el EDA (paso 7) ya detectó que la tasa base de retorno cambia
     con el tiempo.
+  - El MÉTODO de calibración (sigmoid vs. isotonic) se elige con
+    elegir_metodo_calibracion(), usando EXCLUSIVAMENTE el conjunto de
+    validación (Brier + diversidad de valores del score). La versión
+    anterior de este script fijaba "sigmoid" a partir de una
+    comparación hecha, por fuera del código, contra el conjunto de
+    test -- eso ya no permite tratar test como una evaluación
+    independiente. Test se reporta en la tabla comparativa de este
+    script con fines puramente informativos (para ver cómo se
+    comportan los candidatos), pero ninguna decisión de este pipeline
+    (método de calibración, umbral de decisión, bandas de riesgo) se
+    toma mirando esos números -- eso ocurre en evaluar_modelo.py, que
+    solo toca test una vez, al final, para confirmar.
   - Se reporta la regresión logística con y con todas las variables y
     sin `monetary_total`, por la colinealidad de 0.96 con
     `frequency_visitas` detectada en el EDA.
@@ -117,6 +129,82 @@ def precision_en_top_k(y_true: pd.Series, score_riesgo: np.ndarray, k_pct: float
     idx_top = np.argsort(-score_riesgo)[:k]
     no_retorna_real = (y_true.values == 0)
     return no_retorna_real[idx_top].mean()
+
+
+def elegir_metodo_calibracion(rf, X_val: pd.DataFrame, y_val: pd.Series, feature_cols: list,
+                               tolerancia_brier: float = 0.005,
+                               minimo_valores_distintos: int = 30) -> tuple:
+    """Selecciona el método de calibración (sigmoid vs. isotonic) usando
+    EXCLUSIVAMENTE el conjunto de VALIDACIÓN.
+
+    La versión anterior de este script elegía "sigmoid" de forma fija,
+    apoyándose en una comparación hecha por fuera del código contra el
+    conjunto de TEST (0.068 vs 0.066 de Brier) -- eso contamina test como
+    conjunto de decisión y ya no permite reportar sus métricas como una
+    evaluación verdaderamente independiente. Ahora la comparación es
+    parte del pipeline y se hace solo con val.
+
+    Ambos métodos se ajustan con cv="prefit" sobre (X_val, y_val) -- ver
+    nota junto a CalibratedClassifierCV más abajo. Se evalúan, también
+    sobre val (por resubstitución: no existe un cuarto split y el mismo
+    criterio de reutilizar val para evaluar lo que se ajustó con val ya
+    se usa para elegir el umbral de decisión, `elegir_umbral_optimo`),
+    con dos criterios:
+      1. Brier score en val -- cuanto menor, mejor calibración.
+      2. Nº de valores distintos de score_riesgo generados sobre val --
+         un calibrador que colapsa a pocos valores discretos es
+         inservible para priorizar un ranking, por buena que sea su
+         calibración agregada.
+
+    IMPORTANTE -- criterio de dos etapas, no solo "menor Brier":
+    isotonic puede dar un Brier mejor que sigmoid y, al mismo tiempo,
+    colapsar score_riesgo a un puñado de valores discretos (con pocos
+    puntos de validación, isotonic tiende a producir una función escalón
+    con muy pocos escalones). Un score con, por ejemplo, 18 valores
+    posibles en total es inservible para el producto: el dashboard
+    necesita poder ORDENAR clientas dentro de una misma banda de riesgo,
+    no solo clasificarlas en 3 grupos. Por eso:
+
+      1. Se descartan primero los métodos que no alcancen
+         `minimo_valores_distintos` valores distintos en val -- este es
+         un requisito de producto (utilidad del ranking), fijado de
+         antemano y sin mirar test, no un ajuste posterior a los
+         resultados.
+      2. Entre los métodos que sí lo alcanzan, se elige el de mejor
+         Brier; si otro método queda dentro de `tolerancia_brier` del
+         mejor, se prefiere el de mayor diversidad.
+      3. Si NINGÚN método alcanza el mínimo de diversidad (caso límite,
+         no observado en la práctica), se ignora el filtro del punto 1
+         para no dejar la selección sin candidatos, y se elige por
+         Brier -- se imprime un aviso explícito en ese caso.
+
+    Devuelve (metodo_elegido, diagnostico) donde diagnostico es un dict
+    {metodo: {"modelo": CalibratedClassifierCV ya ajustado, "brier_val":
+    float, "valores_distintos_val": int}} -- se guarda el modelo ya
+    ajustado de cada método para no tener que reentrenar el elegido.
+    """
+    diagnostico = {}
+    for metodo in ["sigmoid", "isotonic"]:
+        calibrado = CalibratedClassifierCV(rf, method=metodo, cv="prefit")
+        calibrado.fit(X_val[feature_cols], y_val)
+        proba_val = calibrado.predict_proba(X_val[feature_cols])[:, 1]
+        diagnostico[metodo] = {
+            "modelo": calibrado,
+            "brier_val": brier_score_loss(y_val, proba_val),
+            "valores_distintos_val": int(len(np.unique(np.round(proba_val, 4)))),
+        }
+
+    candidatos = {m: d for m, d in diagnostico.items() if d["valores_distintos_val"] >= minimo_valores_distintos}
+    if not candidatos:
+        print(f"  [aviso] ningún método de calibración alcanza {minimo_valores_distintos} "
+              f"valores distintos en val; se elige solo por Brier.")
+        candidatos = diagnostico
+
+    mejor_brier = min(d["brier_val"] for d in candidatos.values())
+    empatados = {m: d for m, d in candidatos.items() if d["brier_val"] <= mejor_brier + tolerancia_brier}
+    metodo_elegido = max(empatados, key=lambda m: empatados[m]["valores_distintos_val"])
+
+    return metodo_elegido, diagnostico
 
 
 def elegir_umbral_optimo(y_val: pd.Series, proba_retorno_val: np.ndarray) -> float:
@@ -295,7 +383,7 @@ def ejecutar(gold_dir: Path, out_dir: Path) -> dict:
         m.update({"modelo": "Random Forest", "split": split_nombre, "umbral": umbral_rf})
         filas_resultado.append(m)
 
-    # --- Random Forest calibrado (Platt/sigmoid, ajustado sobre val) ---
+    # --- Random Forest calibrado (método elegido con val, ver más abajo) ---
     # cv="prefit" indica a CalibratedClassifierCV que NO debe reentrenar el
     # estimador: usa el `rf` ya entrenado en train tal cual, y solo ajusta
     # el mapeo de calibración sobre val. Es la API correcta para
@@ -306,14 +394,14 @@ def ejecutar(gold_dir: Path, out_dir: Path) -> dict:
     # NUNCA se omite `cv`: sin especificarlo, CalibratedClassifierCV usa su
     # valor por defecto (5-fold CV) y CLONA + REENTRENA el modelo desde
     # cero sobre val, descartando por completo lo aprendido en train.
-    # Se probó también method="isotonic": tenía Brier ligeramente peor
-    # (0.068 vs 0.066 en test) Y colapsaba el score_riesgo a solo 14
-    # valores distintos en todo el test (uno de ellos compartido por el
-    # 36% de las clientas) -- inservible para priorizar dentro de un
-    # grupo tan grande. "sigmoid" da 900 valores distintos sin sacrificar
-    # calibración. Ver docs/entregas/14_validacion_y_umbrales.md §1.
-    rf_calibrado = CalibratedClassifierCV(rf, method="sigmoid", cv="prefit")
-    rf_calibrado.fit(X_val[feature_cols], y_val)
+    #
+    # La elección entre "sigmoid" e "isotonic" se hace en
+    # elegir_metodo_calibracion(), usando solo val (Brier + diversidad de
+    # valores del score) -- La versión anterior fijaba "sigmoid" a mano
+    # a partir de una comparación hecha contra test. Detalle del
+    # resultado de esta selección en docs/entregas/14_validacion_y_umbrales.md §1.
+    metodo_calibracion, diagnostico_calibracion = elegir_metodo_calibracion(rf, X_val, y_val, feature_cols)
+    rf_calibrado = diagnostico_calibracion[metodo_calibracion]["modelo"]
     proba_val_rf_cal = rf_calibrado.predict_proba(X_val[feature_cols])[:, 1]
     proba_test_rf_cal = rf_calibrado.predict_proba(X_test[feature_cols])[:, 1]
     umbral_rf_cal = elegir_umbral_optimo(y_val, proba_val_rf_cal)
@@ -350,6 +438,11 @@ def ejecutar(gold_dir: Path, out_dir: Path) -> dict:
             "lr_completa": umbral_lr_full, "lr_sin_monetary": umbral_lr_sin,
             "rf": umbral_rf, "rf_calibrado": umbral_rf_cal,
         },
+        "metodo_calibracion_elegido": metodo_calibracion,
+        "diagnostico_calibracion": {
+            m: {"brier_val": d["brier_val"], "valores_distintos_val": d["valores_distintos_val"]}
+            for m, d in diagnostico_calibracion.items()
+        },
     }
 
 
@@ -375,6 +468,11 @@ def main():
     print("=== Umbrales de decisión (elegidos en validación) ===")
     for k, v in r["umbrales"].items():
         print(f"  {k}: {v:.2f}")
+    print()
+    print("=== Selección de método de calibración (decidida solo con validación) ===")
+    for m, d in r["diagnostico_calibracion"].items():
+        marca = " <- elegido" if m == r["metodo_calibracion_elegido"] else ""
+        print(f"  {m}: brier_val={d['brier_val']:.4f}  valores_distintos_val={d['valores_distintos_val']}{marca}")
 
 
 if __name__ == "__main__":
