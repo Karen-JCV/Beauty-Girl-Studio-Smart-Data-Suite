@@ -6,7 +6,7 @@
 .env
 *.env
 !.env.example
-_env
+_env 
 
 # --- Datos con información personal o del negocio: nunca al repositorio ---
 # Raw: Excel originales exportados del sistema de gestión (nombres, teléfonos,
