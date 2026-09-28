@@ -843,6 +843,18 @@ def render_cliente_detail(fila, fecha_ref, compact=False):
             unsafe_allow_html=True,
         )
 
+    if fila["segmento_rfm"] == "Campeonas":
+        st.markdown(
+            f"""
+            <div style="font-size:.68rem;line-height:1.5;color:{MUTED};background:#FFF3E8;
+                        border-left:3px solid {GOLD};padding:.45rem .6rem;margin:.4rem 0;border-radius:4px;">
+                ⚠ El modelo es menos fiable en el segmento "Campeonas": trata esta probabilidad individual
+                con más cautela que en otros segmentos.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
     hist = historial_cliente(fila, fecha_ref)
     if not hist.empty:
         st.markdown(
@@ -1337,6 +1349,19 @@ elif page == "Segmentos RFM":
     selected_segment = st.selectbox("Explorar segmento", rfm_order)
     seg = base[base["segmento_rfm"] == selected_segment].sort_values("score_riesgo", ascending=False)
 
+    if selected_segment == "Campeonas":
+        st.markdown(
+            """
+            <div class="note">
+                <b>Menor fiabilidad en este segmento:</b> el modelo es menos fiable en el no-retorno de las clientas
+                "Campeonas" que en el resto de segmentos (su historial de compra es, por definición, muy bueno,
+                así que hay pocas señales de alerta previas cuando una de ellas deja de volver). Trata el riesgo
+                individual de este grupo con más cautela que el de los demás.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
     st.markdown(
         f'<div class="card"><div class="card-title">Clientas · {selected_segment}</div>'
         f'<div class="card-caption">{len(seg)} clientas en el snapshot actual</div></div>',
@@ -1570,6 +1595,20 @@ elif page == "Modelo de retorno":
                 <b>3.</b> Con los valores actuales, hasta <b>{meta['umbral_bajo']:.2f}</b> se muestra como <b>Bajo riesgo</b>, desde <b>{meta['umbral_alto']:.2f}</b> como <b>Alto riesgo</b> y entre ambos valores como <b>Riesgo medio</b>.<br>
                 <b>4.</b> Los factores que aparecen en cada clienta ayudan a explicar qué señales del historial han pesado más en su resultado.
             </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('<div class="section-space"></div>', unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class="note">
+            <b>Importante sobre las bandas Alto / Medio / Bajo:</b> reflejan la prioridad relativa de una
+            clienta dentro de la cartera actual (a qué grupo de clientas conviene prestar atención primero),
+            no un umbral de probabilidad absoluta ni universal. Están calculadas sobre la distribución real
+            del negocio, que cambia con el tiempo -- por eso se recalculan al reentrenar el modelo, en vez de
+            fijarse una única vez para siempre.
         </div>
         """,
         unsafe_allow_html=True,
