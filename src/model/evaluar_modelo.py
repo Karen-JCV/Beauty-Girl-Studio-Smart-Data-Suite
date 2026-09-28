@@ -51,8 +51,8 @@ from train_model import (
 
 SEGMENTO_MENOR_FIABILIDAD = "Campeonas"
 NOTA_MENOR_FIABILIDAD = (
-    "Menor fiabilidad: el modelo detecta con menos fiabilidad el no-retorno en este segmento"
-    "(recall notablemente inferior al del resto). Tratar la probabilidad"
+    "Menor fiabilidad: el modelo detecta con menos fiabilidad el no-retorno en este segmento "
+    "(recall notablemente inferior al del resto). Tratar la probabilidad "
     "individual con más cautela aquí que en otros segmentos."
 )
 

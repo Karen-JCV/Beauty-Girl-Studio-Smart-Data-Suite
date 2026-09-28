@@ -263,7 +263,7 @@ def entrenar_logistica(X_train, y_train, feature_cols, excluir_monetary=False):
 def entrenar_random_forest(X_train, y_train, feature_cols):
     modelo = RandomForestClassifier(
         n_estimators=300, max_depth=6, min_samples_leaf=20,
-        class_weight="balanced", random_state=RANDOM_STATE, n_jobs=-1,
+        class_weight="balanced", random_state=RANDOM_STATE, n_jobs=1,
     )
     modelo.fit(X_train[feature_cols], y_train)
     return modelo
