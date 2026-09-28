@@ -14,15 +14,17 @@
     "categoria_favorita_MANICURE PERMANENTE",
     "categoria_favorita_Otros",
     "categoria_favorita_PEDICURE",
-    "categoria_favorita_PROMOCIONES ",
+    "categoria_favorita_PROMOCIONES",
     "segmento_rfm_Campeonas",
     "segmento_rfm_En_riesgo",
     "segmento_rfm_Inactivas",
     "segmento_rfm_Leales",
     "segmento_rfm_Sin_segmentar"
   ],
-  "umbral_decision": 0.4468,
-  "umbral_bajo": 91.58,
-  "umbral_alto": 97.33,
-  "fecha_entrenamiento": "2026-09-22T18:55:18.970467+00:00"
+  "metodo_calibracion": "sigmoid",
+  "umbral_decision": 0.4204,
+  "umbral_bajo": 55.63,
+  "umbral_alto": 96.95,
+  "fecha_entrenamiento": "2026-09-27T23:01:12.985185+00:00",
+  "nota_bandas": "Las bandas Alto/Medio/Bajo son percentiles de score_riesgo dentro de la cartera actual (prioridad operativa relativa), no umbrales de probabilidad absoluta."
 }
