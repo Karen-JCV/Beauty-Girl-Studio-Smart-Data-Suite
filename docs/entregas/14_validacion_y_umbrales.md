@@ -38,8 +38,8 @@ de validación**:
 
 | Método | Brier (val) | Valores distintos de score_riesgo (val) |
 |---|---|---|
-| sigmoid | 0.0811 | 632 |
-| isotonic | 0.0744 | **18** |
+| sigmoid | 0.0812 | 610 |
+| isotonic | 0.0753 | **15** |
 
 Isotonic da mejor Brier en val, pero colapsa el score a solo 18 valores distintos —
 inservible para ordenar un ranking de cientos de clientas dentro de una misma banda de
@@ -83,15 +83,15 @@ en un segundo conjunto de ajuste:
 ### Umbrales definitivos (fuente: `models/model_meta.json`)
 
 ```
-umbral_bajo:  55.41   (score_riesgo <= 55.41 -> Bajo)
-umbral_alto:  97.04   (score_riesgo >= 97.04 -> Alto)
+umbral_bajo:  55.63   (score_riesgo <= 55.63 -> Bajo)
+umbral_alto:  96.95   (score_riesgo >= 96.95 -> Alto)
 ```
 
 **Nota importante — por qué estos números son muy distintos a los de la versión anterior
 del documento (92.6 / 97.3):** train+val tiene una tasa de no-retorno bastante menor
 (~65%) que test (78.4%), porque el negocio se ha deteriorado con el tiempo y test es el
 período más reciente. Al fijar los percentiles solo con train+val, el umbral "Bajo" baja
-mucho (de 92.6 a 55.41): la distribución de `score_riesgo` en el período usado para fijar
+mucho (de 92.6 a 55.63): la distribución de `score_riesgo` en el período usado para fijar
 las bandas es menos extrema que la del período más reciente. Este es precisamente el tipo
 de sesgo que se quería evitar dejando de mirar test para tomar esta decisión — y confirma
 que la versión anterior, sin darse cuenta, había ajustado las bandas a la distribución más
@@ -101,13 +101,13 @@ reciente y más adversa del negocio, en vez de a una regla estable.
 
 | Banda | n (test) | % real que no retornó |
 |---|---|---|
-| Bajo | 256 | 19.5% |
-| Medio | 544 | 90.8% |
-| Alto | 395 | 99.5% |
+| Bajo | 258 | 20.2% |
+| Medio | 513 | 90.4% |
+| Alto | 424 | 99.3% |
 
 Las bandas siguen siendo ordinalmente correctas (Bajo < Medio < Alto en tasa real de
 no-retorno) al aplicarlas, ya fijadas, sobre test. Pero **"Medio" se comporta casi como
-"Alto"** en este período (90.8% de no-retorno real) — reflejo directo de la deriva
+"Alto"** en este período (90.4% de no-retorno real) — reflejo directo de la deriva
 temporal del negocio: los umbrales, fijados sobre un período con menos no-retorno,
 resultan conservadores al aplicarse sobre el período más reciente, con más no-retorno.
 **Recomendación operativa:** recalcular estos umbrales cada vez que se reentrene el
@@ -117,9 +117,9 @@ vez de darlos por fijos de forma indefinida.
 ### Distribución resultante en el snapshot de producción actual (2026-08-31)
 
 ```
-Alto:  214 clientas (34%)
-Medio: 332 clientas (53%)
-Bajo:   77 clientas (12%)
+Alto:  234 clientas (38%)
+Medio: 315 clientas (51%)
+Bajo:   74 clientas (12%)
 ```
 
 **Aclaración para el dashboard y para la propietaria:** estas bandas representan
@@ -133,7 +133,7 @@ pestaña "Modelo de retorno" del dashboard.
 ## 3. Umbral de decisión (fijado en validación, sin cambios de metodología)
 
 ```
-umbral_decision: 0.4022   (prob_retorno_90d >= 0.4022 -> se predice "retorna")
+umbral_decision: 0.4204   (prob_retorno_90d >= 0.4204 -> se predice "retorna")
 ```
 
 Ya se fijaba correctamente solo con validación en la versión anterior de este documento
@@ -177,19 +177,19 @@ competencia). Se documenta como limitación estructural del enfoque.
 
 | Segmento | n | % real no retorna | Recall (no retorna) | Precision (no retorna) |
 |---|---|---|---|---|
-| Inactivas | 222 | 99.5% | 100.0% | 99.5% |
-| En_riesgo | 432 | 97.5% | 99.0% | 97.4% |
+| Inactivas | 217 | 99.5% | 100.0% | 99.5% |
+| En_riesgo | 437 | 97.5% | 99.3% | 97.5% |
 | Leales | 267 | 81.3% | 87.6% | 92.7% |
-| Campeonas | 274 | 28.5% | **71.8%** | 69.1% |
+| Campeonas | 274 | 28.5% | **70.5%** | 68.8% |
 
 El modelo es casi perfecto en los segmentos de mayor riesgo (Inactivas, En_riesgo). Es
-notablemente más débil en **Campeonas** (recall 71.8%: de las "campeonas" que sí dejaron
-de volver, el modelo detecta el 72%) — coherente con el hallazgo de la sección 4: las
+notablemente más débil en **Campeonas** (recall 70.5%: de las "campeonas" que sí dejaron
+de volver, el modelo detecta el 70.5%) — coherente con el hallazgo de la sección 4: las
 clientas más fieles son precisamente las que, cuando dejan de volver, lo hacen de forma
 menos predecible a partir del historial RFM.
 
 **Esta limitación se muestra ahora de forma visible en el dashboard** (pestaña "Segmentos
-RFM" al explorar "Campeonas" y en el panel de detalle de cualquier clienta de ese
+RFM" al explorar "Campeonas", y en el panel de detalle de cualquier clienta de ese
 segmento), no solo en este documento técnico — siguiendo el feedback del tutor de la
 Entrega 5 de que el hallazgo debía quedar visible, no solo documentado.
 
@@ -199,7 +199,7 @@ Entrega 5 de que el hallazgo debía quedar visible, no solo documentado.
 
 Se aplicó el modelo ya entrenado al snapshot más reciente (`fecha_referencia =
 2026-08-31`, sin horizonte completo, el que usa el dashboard). Ejemplo de las clientas de
-mayor riesgo: `score_riesgo ≈ 97.9`, `banda_riesgo = Alto`, `prob_retorno_90d ≈ 0.021`.
+mayor riesgo: `score_riesgo ≈ 97.8`, `banda_riesgo = Alto`, `prob_retorno_90d ≈ 0.022`.
 
 Confirma que `gold_cliente_snapshot` → `model_input` → modelo → `score_riesgo`/`banda_riesgo`
 funciona sin intervención manual, con la metodología ya corregida de principio a fin.
