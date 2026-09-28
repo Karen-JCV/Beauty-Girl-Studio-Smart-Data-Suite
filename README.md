@@ -145,8 +145,8 @@ Contrato completo de campos, tipos y reglas en `docs/architecture/contrato_anali
 
 | Métrica (test -- confirmación única, sin haber influido en ninguna decisión previa) | Valor |
 |---|---|
-| ROC-AUC | 0.9525 |
-| Brier score | 0.0645 |
+| ROC-AUC | 0.9521 |
+| Brier score | 0.0650 |
 | F1 (clase "no retorna") | 0.9439 |
 | Precision@20% (top clientas de mayor riesgo) | 0.996 |
 
