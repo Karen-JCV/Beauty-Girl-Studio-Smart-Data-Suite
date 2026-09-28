@@ -152,9 +152,9 @@ Contrato completo de campos, tipos y reglas en `docs/architecture/contrato_anali
 
 | Umbrales definitivos (fijados solo con train+val -- fuente: `model_meta.json`) | Valor |
 |---|---|
-| Umbral de decisión | 0.4022 |
-| Banda "Bajo riesgo" hasta | 55.41 |
-| Banda "Alto riesgo" desde | 97.04 |
+| Umbral de decisión | 0.4204 |
+| Banda "Bajo riesgo" hasta | 55.63 |
+| Banda "Alto riesgo" desde | 96.95 |
 
 Estas cifras fueron reproducidas de forma independiente en la auditoría final de cierre, ejecutando el pipeline completo desde los Excel originales hasta el entrenamiento del modelo, con la metodología ya corregida (calibración y bandas fijadas solo con train/validación, test tocado una única vez).
 
@@ -214,7 +214,7 @@ por limitación técnica:
 # Limitaciones conocidas
 
 - **Segmento "Campeonas":** el modelo es notablemente más débil identificando el no-retorno de las
-  clientas más fieles (recall del 71.8% en ese segmento, frente a >99% en clientas inactivas o en
+  clientas más fieles (recall del 70.5% en ese segmento, frente a >99% en clientas inactivas o en
   riesgo) — es un patrón estructural (RFM no captura eventos externos como mudanza o cambio de
   trabajo), no un error corregible ajustando el modelo. Esta limitación ya es visible directamente
   en el dashboard (pestaña "Segmentos RFM" y panel de detalle de clienta), no solo en la
